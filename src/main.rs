@@ -80,7 +80,7 @@ struct ProbabilityOutOfBoundsError;
 
 fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
         max_x: u16, max_y: u16,
-        probability_to_add: f32) -> Result<(), ProbabilityOutOfBoundsError> {
+        probability_to_add: f64) -> Result<(), ProbabilityOutOfBoundsError> {
     if probability_to_add < 0.0 || probability_to_add > 1.0 {
         return Err(ProbabilityOutOfBoundsError)
     }
@@ -90,8 +90,7 @@ fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
     falling_chars.retain(|f| !f.out_of_bounds());
 
     for _ in falling_chars.len()..max_fallers {
-        let random_float = thread_rng().gen::<f32>();
-        if random_float > 1.0 - probability_to_add {
+        if thread_rng().gen_bool(probability_to_add) {
             falling_chars.push(FallingChar::new(max_x, max_y))
         }
     }
