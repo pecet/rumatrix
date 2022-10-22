@@ -1,4 +1,4 @@
-use rand::prelude::*;
+use rand::{prelude::*, distributions};
 use termion::{color, style, clear, cursor, terminal_size};
 use std::{process, thread, time::Duration, io::{self, Write}};
 use ctrlc;
@@ -21,13 +21,18 @@ impl FallingChar {
     fn new(max_x: u16, max_y: u16) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
         let previous_position = position.clone();
+        let char_to_render = FallingChar::get_random_char();
         Self {
             position,
             previous_position,
             max_position: Position { x: max_x, y: max_y },
-            char_to_render: '#',
+            char_to_render,
             fg: random_fg(),
         }
+    }
+
+    fn get_random_char() -> char {
+        thread_rng().sample(distributions::Alphanumeric) as char
     }
 
     fn out_of_bounds(&self) -> bool {
@@ -65,14 +70,12 @@ fn random_fg() -> (&'static str, &'static str) {
 }
 
 fn main_loop(falling_chars: &mut Vec<FallingChar>) {
-    let max_count = 15;
-
     for f in falling_chars.iter_mut() {
         f.render();
         f.advance();
     }
     io::stdout().flush().unwrap();
-    thread::sleep(Duration::from_millis(100));
+    thread::sleep(Duration::from_millis(66));
 }
 
 #[derive(Debug)]
