@@ -1,25 +1,29 @@
 use rand::prelude::*;
-use termion::{color, style, clear, cursor, screen, terminal_size, raw::{self, IntoRawMode}};
-use std::{thread, time::Duration, io::{self, Write}};
+use termion::{color, style, clear, cursor, terminal_size};
+use std::{process, thread, time::Duration, io::{self, Write}};
+use ctrlc;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct Position {
     x: u16,
     y: u16,
 }
-#[derive(Debug)]
+
 struct FallingChar {
     position: Position,
-    //previous_position: Position,
+    previous_position: Position,
     max_position: Position,
     char_to_render: char,
-    fg: &'static str,
+    fg: (&'static str, &'static str),
 }
 
 impl FallingChar {
     fn new(max_x: u16, max_y: u16) -> Self {
+        let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
+        let previous_position = position.clone();
         Self {
-            position: Position { x: thread_rng().gen_range(1..max_x), y: 1 },
+            position,
+            previous_position,
             max_position: Position { x: max_x, y: max_y },
             char_to_render: '#',
             fg: random_fg(),
@@ -32,49 +36,83 @@ impl FallingChar {
 
     fn render(&self) {
         if !self.out_of_bounds() {
-            print!("{}{}{}", cursor::Goto(self.position.x, self.position.y), self.fg, self.char_to_render);
+            print!("{}{}{}", cursor::Goto(self.previous_position.x, self.previous_position.y),
+                self.fg.0, self.char_to_render);
+            print!("{}{}{}{}{}", cursor::Goto(self.position.x, self.position.y),
+                style::Bold, self.fg.1, self.char_to_render, style::NoBold);
         }
     }
 
     fn advance(&mut self) {
-        if !self.out_of_bounds() {
-            self.position.y += 1;
-        }
+        self.previous_position = self.position.clone();
+        self.position.y += 1;
     }
 }
 
-fn random_fg() -> &'static str {
+fn random_fg() -> (&'static str, &'static str) {
     let rand_value = thread_rng().gen_range(2..=8);
-    let color: &str = match rand_value {
-        2 => color::Red.fg_str(),
-        3 => color::Green.fg_str(),
-        4 => color::Yellow.fg_str(),
-        5 => color::Blue.fg_str(),
-        6 => color::Magenta.fg_str(),
-        7 => color::Cyan.fg_str(),
-        8 => color::White.fg_str(),        
-        _ => color::Black.fg_str(),
+    let color: (&str, &str) = match rand_value {
+        2 => (color::Red.fg_str(), color::LightRed.fg_str()),
+        3 => (color::Green.fg_str(), color::LightGreen.fg_str()),
+        4 => (color::Yellow.fg_str(), color::LightYellow.fg_str()),
+        5 => (color::Blue.fg_str(), color::LightBlack.fg_str()),
+        6 => (color::Magenta.fg_str(), color::LightMagenta.fg_str()),
+        7 => (color::Cyan.fg_str(), color::LightCyan.fg_str()),
+        8 => (color::White.fg_str(), color::LightWhite.fg_str()),
+        _ => (color::Black.fg_str(), color::LightBlack.fg_str()),
     };
     color
 }
 
 fn main_loop(falling_chars: &mut Vec<FallingChar>) {
+    let max_count = 15;
+
     for f in falling_chars.iter_mut() {
         f.render();
-        io::stdout().flush().unwrap();
         f.advance();
     }
+    io::stdout().flush().unwrap();
+    thread::sleep(Duration::from_millis(100));
+}
+
+#[derive(Debug)]
+struct ProbabilityOutOfBoundsError;
+
+fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
+        max_x: u16, max_y: u16,
+        probability_to_add: f32) -> Result<(), ProbabilityOutOfBoundsError> {
+    if probability_to_add < 0.0 || probability_to_add > 1.0 {
+        return Err(ProbabilityOutOfBoundsError)
+    }
+    let max_fallers = 40; // hardcoded for now
+
+    // retire old fallers
     falling_chars.retain(|f| !f.out_of_bounds());
-    thread::sleep(Duration::from_millis(125));
+
+    for _ in falling_chars.len()..max_fallers {
+        let random_float = thread_rng().gen::<f32>();
+        if random_float > 1.0 - probability_to_add {
+            falling_chars.push(FallingChar::new(max_x, max_y))
+        }
+    }
+    Ok(())
 }
 
 fn main() {
+    ctrlc::set_handler(|| {
+        println!("{}{}{}", style::Reset, clear::All, cursor::Show);
+        process::exit(0);
+    }).expect("Error handling CTRL+C");
+
     let (size_x, size_y) = terminal_size().expect("Cannot get terminal size!");
-    print!("{}", clear::All);
+    print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
-    let mut falling_chars = vec![FallingChar::new(size_x, size_y), FallingChar::new(size_x, size_y), FallingChar::new(size_x, size_y)];
+    let mut falling_chars = vec![FallingChar::new(size_x, size_y)];
+    add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.2).unwrap();
+
     loop {
         main_loop(&mut falling_chars);
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.1).unwrap();
     }
 }
