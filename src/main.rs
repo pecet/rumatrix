@@ -1,6 +1,6 @@
 use rand::prelude::*;
-use termion::{color, style, clear, cursor, screen, terminal_size};
-use std::{thread, time::Duration};
+use termion::{color, style, clear, cursor, screen, terminal_size, raw::{self, IntoRawMode}};
+use std::{thread, time::Duration, io::{self, Write}};
 
 #[derive(Debug, Clone, Copy)]
 struct Position {
@@ -59,17 +59,21 @@ fn random_fg() -> &'static str {
 }
 
 fn main_loop(falling_chars: &mut Vec<FallingChar>) {
-    for f in falling_chars {
+    for f in falling_chars.iter_mut() {
         f.render();
+        io::stdout().flush().unwrap();
         f.advance();
     }
-    thread::sleep(Duration::from_millis(100));
+    falling_chars.retain(|f| !f.out_of_bounds());
+    thread::sleep(Duration::from_millis(125));
 }
 
 fn main() {
     let (size_x, size_y) = terminal_size().expect("Cannot get terminal size!");
-    let mut falling_chars = vec![FallingChar::new(size_x, size_y), FallingChar::new(size_x, size_y), FallingChar::new(size_x, size_y)];
     print!("{}", clear::All);
+    io::stdout().flush().unwrap();
+
+    let mut falling_chars = vec![FallingChar::new(size_x, size_y), FallingChar::new(size_x, size_y), FallingChar::new(size_x, size_y)];
     loop {
         main_loop(&mut falling_chars);
     }
