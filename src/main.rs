@@ -1,6 +1,6 @@
 use rand::{prelude::*, distributions};
-use termion::{color, style, clear, cursor, terminal_size};
-use std::{process, thread, time::Duration, io::{self, Write}};
+use termion::{color, style, clear, cursor, terminal_size, input::TermRead, event::Key};
+use std::{process, thread, time::Duration, io::{self, Write, stdin}};
 use ctrlc;
 
 #[derive(Clone, Copy)]
@@ -11,24 +11,25 @@ struct Position {
 
 struct FallingChar {
     position: Position,
-    previous_position: Position,
+    previous_positions: Vec<Position>,
     max_position: Position,
     char_to_render: Option<char>,
     fg: (&'static str, &'static str),
+    size: u16,
 }
 
 impl FallingChar {
     fn new(max_x: u16, max_y: u16) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
-        let previous_position = position.clone();
-        //let char_to_render = Some(FallingChar::get_random_char());
-        let char_to_render = None;
+        let char_to_render = Some(FallingChar::get_random_char());
+        //let char_to_render = None;
         Self {
             position,
-            previous_position,
+            previous_positions: vec![],
             max_position: Position { x: max_x, y: max_y },
             char_to_render,
             fg: random_fg(),
+            size: max_y / 2,
         }
     }
 
@@ -37,7 +38,7 @@ impl FallingChar {
     }
 
     fn out_of_bounds(&self) -> bool {
-        self.position.y > self.max_position.y || self.position.x > self.max_position.x
+        self.position.y >= self.max_position.y + self.size || self.position.x > self.max_position.x
     }
 
     fn render(&self) {
@@ -46,15 +47,27 @@ impl FallingChar {
                 Some(char) => char,
                 None => FallingChar::get_random_char(),
             };
-            print!("{}{}{}", cursor::Goto(self.previous_position.x, self.previous_position.y),
-                self.fg.0, char_to_render);
+
             print!("{}{}{}{}{}", cursor::Goto(self.position.x, self.position.y),
-                style::Bold, self.fg.1, char_to_render, style::NoBold);
+            style::Bold, self.fg.1, char_to_render, style::NoBold);
+
+            if self.previous_positions.len() > 0 {
+                let mut iterator = self.previous_positions.iter();
+                let first_item = iterator.next().unwrap();
+                print!("{}{}{}", cursor::Goto(first_item.x, first_item.y), self.fg.0, ' ');
+
+                for pos in iterator {
+                    print!("{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render);
+                }
+            }
         }
     }
 
     fn advance(&mut self) {
-        self.previous_position = self.position.clone();
+        if self.previous_positions.len() >= self.size.into() {
+            self.previous_positions.remove(0);
+        }
+        self.previous_positions.push(self.position.clone());
         self.position.y += 1;
     }
 }
@@ -80,7 +93,7 @@ fn main_loop(falling_chars: &mut Vec<FallingChar>) {
         f.advance();
     }
     io::stdout().flush().unwrap();
-    thread::sleep(Duration::from_millis(66));
+    thread::sleep(Duration::from_millis(33));
 }
 
 #[derive(Debug)]
@@ -92,7 +105,7 @@ fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
     if probability_to_add < 0.0 || probability_to_add > 1.0 {
         return Err(ProbabilityOutOfBoundsError)
     }
-    let max_fallers = 40; // hardcoded for now
+    let max_fallers = 44; // hardcoded for now
 
     // retire old fallers
     falling_chars.retain(|f| !f.out_of_bounds());
