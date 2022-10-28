@@ -13,7 +13,7 @@ struct FallingChar {
     position: Position,
     previous_position: Position,
     max_position: Position,
-    char_to_render: char,
+    char_to_render: Option<char>,
     fg: (&'static str, &'static str),
 }
 
@@ -21,7 +21,8 @@ impl FallingChar {
     fn new(max_x: u16, max_y: u16) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
         let previous_position = position.clone();
-        let char_to_render = FallingChar::get_random_char();
+        //let char_to_render = Some(FallingChar::get_random_char());
+        let char_to_render = None;
         Self {
             position,
             previous_position,
@@ -41,10 +42,14 @@ impl FallingChar {
 
     fn render(&self) {
         if !self.out_of_bounds() {
+            let char_to_render = match self.char_to_render {
+                Some(char) => char,
+                None => FallingChar::get_random_char(),
+            };
             print!("{}{}{}", cursor::Goto(self.previous_position.x, self.previous_position.y),
-                self.fg.0, self.char_to_render);
+                self.fg.0, char_to_render);
             print!("{}{}{}{}{}", cursor::Goto(self.position.x, self.position.y),
-                style::Bold, self.fg.1, self.char_to_render, style::NoBold);
+                style::Bold, self.fg.1, char_to_render, style::NoBold);
         }
     }
 
