@@ -22,14 +22,15 @@ impl FallingChar {
     fn new(max_x: u16, max_y: u16) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
         let char_to_render = Some(FallingChar::get_random_char());
+        let size = max_y / 2;
         //let char_to_render = None;
         Self {
             position,
-            previous_positions: vec![],
+            previous_positions: Vec::with_capacity(size.into()),
             max_position: Position { x: max_x, y: max_y },
             char_to_render,
             fg: random_fg(),
-            size: max_y / 2,
+            size,
         }
     }
 
