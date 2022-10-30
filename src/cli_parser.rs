@@ -17,4 +17,8 @@ pub struct Cli {
     /// Select color (1-8 inclusive) of fallers or 'rnd' for random
     #[arg(long, short='c')]
     pub color: Option<String>,
+
+    /// Number of fallers
+    #[arg(long, short='n')]
+    pub no_fallers: Option<usize>,
 }

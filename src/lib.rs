@@ -18,11 +18,11 @@ pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
         max_x: u16,
         max_y: u16,
         color: i32,
+        max_fallers: usize,
         probability_to_add: f64) -> Result<(), ProbabilityOutOfBoundsError> {
     if !(0.0..=1.0).contains(&probability_to_add) {
         return Err(ProbabilityOutOfBoundsError)
     }
-    let max_fallers = 140; // hardcoded for now
 
     // retire old fallers
     falling_chars.retain(|f| !f.out_of_bounds());
@@ -82,14 +82,22 @@ pub fn program_main() {
         panic!("Incorrect value for color provided: {}", color)
     }
 
+    let no_fallers = match cli.no_fallers {
+        Some(no) => match no {
+            0 => 1,
+            _ => no,
+        }
+        None => 100,
+    };
+
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
-    let mut falling_chars = vec![FallingChar::new(size_x, size_y, color)];
-    add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, 0.5).unwrap();
+    let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
+    add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.5).unwrap();
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, 0.3).unwrap();
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.3).unwrap();
     }
 }
