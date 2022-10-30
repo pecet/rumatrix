@@ -107,7 +107,7 @@ fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
     if probability_to_add < 0.0 || probability_to_add > 1.0 {
         return Err(ProbabilityOutOfBoundsError)
     }
-    let max_fallers = 44; // hardcoded for now
+    let max_fallers = 140; // hardcoded for now
 
     // retire old fallers
     falling_chars.retain(|f| !f.out_of_bounds());
