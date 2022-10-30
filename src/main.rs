@@ -1,6 +1,6 @@
 use rand::{prelude::*, distributions};
-use termion::{color, style, clear, cursor, terminal_size, input::TermRead, event::Key};
-use std::{process, thread, time::Duration, io::{self, Write, stdin}};
+use termion::{screen::{self, IntoAlternateScreen, AlternateScreen}, color, style, clear, cursor, terminal_size, input::TermRead, event::Key};
+use std::{process, thread, time::Duration, io::{self, Write, stdin, Stdout}};
 use ctrlc;
 
 #[derive(Clone, Copy)]
@@ -42,23 +42,23 @@ impl FallingChar {
         self.position.y >= self.max_position.y + self.size || self.position.x > self.max_position.x
     }
 
-    fn render(&self) {
+    fn render(&self, screen: &mut AlternateScreen<Stdout>) {
         if !self.out_of_bounds() {
             let char_to_render = match self.char_to_render {
                 Some(char) => char,
                 None => FallingChar::get_random_char(),
             };
-
-            print!("{}{}{}{}{}", cursor::Goto(self.position.x, self.position.y),
-            style::Bold, self.fg.1, char_to_render, style::NoBold);
+            write!(screen, "{}{}{}{}{}",
+                cursor::Goto(self.position.x, self.position.y),style::Bold, self.fg.1, char_to_render, style::NoBold)
+                .unwrap();
 
             if self.previous_positions.len() > 0 {
                 let mut iterator = self.previous_positions.iter();
                 let first_item = iterator.next().unwrap();
-                print!("{}{}{}", cursor::Goto(first_item.x, first_item.y), self.fg.0, ' ');
+                write!(screen, "{}{}{}", cursor::Goto(first_item.x, first_item.y), self.fg.0, ' ').unwrap();
 
                 for pos in iterator {
-                    print!("{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render);
+                    write!(screen, "{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render).unwrap();
                 }
             }
         }
@@ -89,11 +89,12 @@ fn random_fg() -> (&'static str, &'static str) {
 }
 
 fn main_loop(falling_chars: &mut Vec<FallingChar>) {
+    let mut screen = io::stdout().into_alternate_screen().unwrap();
     for f in falling_chars.iter_mut() {
-        f.render();
+        f.render(&mut screen);
         f.advance();
     }
-    io::stdout().flush().unwrap();
+    screen.flush().unwrap(); // copy alternate screen to main screen
     thread::sleep(Duration::from_millis(33));
 }
 
