@@ -1,10 +1,15 @@
 pub mod position;
 pub mod falling_char;
+pub mod cli_parser;
 use crate::falling_char::*;
+use crate::cli_parser::*;
 
 use rand::prelude::*;
 use termion::{style, clear, cursor, terminal_size, screen::IntoAlternateScreen};
+use std::default;
 use std::{process, thread, time::Duration, io::{self, Write}};
+use clap::{Parser, Subcommand};
+
 
 #[derive(Debug)]
 pub struct ProbabilityOutOfBoundsError;
@@ -39,13 +44,24 @@ pub fn main_loop(falling_chars: &mut [FallingChar]) {
 }
 
 pub fn program_main() {
+    let cli = Cli::parse();
+
     ctrlc::set_handler(|| {
         print!("{}{}{}{}", style::Reset, clear::All, cursor::Show, cursor::Goto(1, 1));
         io::stdout().flush().unwrap();
         process::exit(0);
     }).expect("Error handling CTRL+C");
 
-    let (size_x, size_y) = terminal_size().expect("Cannot get terminal size!");
+    let default_size = terminal_size().expect("Cannot get terminal size!");
+
+    let (size_x, size_y) = match (cli.size_x, cli.size_y) {
+        (Some(x), Some(y)) => (x, y),
+        (Some(x), None) => (x, default_size.1),
+        (None, Some(y)) => (default_size.0, y),
+        _ => default_size,
+    };
+
+    //
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
