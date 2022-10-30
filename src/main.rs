@@ -123,6 +123,7 @@ fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
 fn main() {
     ctrlc::set_handler(|| {
         print!("{}{}{}{}", style::Reset, clear::All, cursor::Show, cursor::Goto(1, 1));
+        io::stdout().flush().unwrap();
         process::exit(0);
     }).expect("Error handling CTRL+C");
 
