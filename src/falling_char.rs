@@ -1,7 +1,6 @@
 use rand::{prelude::*, distributions};
-use termion::{screen::{self, IntoAlternateScreen, AlternateScreen}, color, style, clear, cursor, terminal_size, input::TermRead, event::Key};
-use std::{process, thread, time::Duration, io::{self, Write, stdin, Stdout}, cmp::min, cmp::max};
-use ctrlc;
+use termion::{screen::AlternateScreen, color, style, cursor};
+use std::{io::{Write, Stdout}, cmp::max};
 use crate::position::*;
 
 pub struct FallingChar {

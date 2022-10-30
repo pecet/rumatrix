@@ -2,9 +2,9 @@ pub mod position;
 pub mod falling_char;
 use crate::falling_char::*;
 
-use rand::{prelude::*, distributions};
-use termion::{screen::{self, IntoAlternateScreen, AlternateScreen}, color, style, clear, cursor, terminal_size, input::TermRead, event::Key};
-use std::{process, thread, time::Duration, io::{self, Write, stdin, Stdout}, cmp::min, cmp::max};
+use rand::prelude::*;
+use termion::{style, clear, cursor, terminal_size, screen::IntoAlternateScreen};
+use std::{process, thread, time::Duration, io::{self, Write}};
 use ctrlc;
 
 pub fn main_loop(falling_chars: &mut Vec<FallingChar>) {
