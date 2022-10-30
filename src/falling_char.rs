@@ -61,10 +61,10 @@ impl FallingChar {
                 cursor::Goto(self.position.x, self.position.y),style::Bold, self.fg.1, char_to_render, style::NoBold)
                 .unwrap();
 
-            if self.previous_positions.len() > 0 {
+            if !self.previous_positions.is_empty() {
                 let mut iterator = self.previous_positions.iter();
                 let first_item = iterator.next().unwrap();
-                write!(screen, "{}{}{}", cursor::Goto(first_item.x, first_item.y), self.fg.0, ' ').unwrap();
+                write!(screen, "{}{} ", cursor::Goto(first_item.x, first_item.y), self.fg.0).unwrap();
 
                 for pos in iterator {
                     write!(screen, "{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render).unwrap();
@@ -77,7 +77,7 @@ impl FallingChar {
         if self.previous_positions.len() >= self.size.into() {
             self.previous_positions.remove(0);
         }
-        self.previous_positions.push(self.position.clone());
+        self.previous_positions.push(self.position);
         self.position.y += 1;
     }
 }

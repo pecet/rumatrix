@@ -5,17 +5,6 @@ use crate::falling_char::*;
 use rand::prelude::*;
 use termion::{style, clear, cursor, terminal_size, screen::IntoAlternateScreen};
 use std::{process, thread, time::Duration, io::{self, Write}};
-use ctrlc;
-
-pub fn main_loop(falling_chars: &mut Vec<FallingChar>) {
-    let mut screen = io::stdout().into_alternate_screen().unwrap();
-    for f in falling_chars.iter_mut() {
-        f.render(&mut screen);
-        f.advance();
-    }
-    screen.flush().unwrap(); // copy alternate screen to main screen
-    thread::sleep(Duration::from_millis(33));
-}
 
 #[derive(Debug)]
 pub struct ProbabilityOutOfBoundsError;
@@ -23,7 +12,7 @@ pub struct ProbabilityOutOfBoundsError;
 pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
         max_x: u16, max_y: u16,
         probability_to_add: f64) -> Result<(), ProbabilityOutOfBoundsError> {
-    if probability_to_add < 0.0 || probability_to_add > 1.0 {
+    if !(0.0..=1.0).contains(&probability_to_add) {
         return Err(ProbabilityOutOfBoundsError)
     }
     let max_fallers = 140; // hardcoded for now
@@ -37,6 +26,16 @@ pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
         }
     }
     Ok(())
+}
+
+pub fn main_loop(falling_chars: &mut [FallingChar]) {
+    let mut screen = io::stdout().into_alternate_screen().unwrap();
+    for f in falling_chars.iter_mut() {
+        f.render(&mut screen);
+        f.advance();
+    }
+    screen.flush().unwrap(); // copy alternate screen to main screen
+    thread::sleep(Duration::from_millis(33));
 }
 
 pub fn program_main() {
