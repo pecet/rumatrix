@@ -1,6 +1,6 @@
 use rand::{prelude::*, distributions};
 use termion::{screen::{self, IntoAlternateScreen, AlternateScreen}, color, style, clear, cursor, terminal_size, input::TermRead, event::Key};
-use std::{process, thread, time::Duration, io::{self, Write, stdin, Stdout}};
+use std::{process, thread, time::Duration, io::{self, Write, stdin, Stdout}, cmp::min, cmp::max};
 use ctrlc;
 
 #[derive(Clone, Copy)]
@@ -22,8 +22,8 @@ impl FallingChar {
     fn new(max_x: u16, max_y: u16) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
         let char_to_render = Some(FallingChar::get_random_char());
-        let size = max_y / 2;
         //let char_to_render = None;
+        let size = thread_rng().gen_range(max(2, max_y / 3)..max_y);
         Self {
             position,
             previous_positions: Vec::with_capacity(size.into()),
@@ -122,7 +122,7 @@ fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
 
 fn main() {
     ctrlc::set_handler(|| {
-        println!("{}{}{}", style::Reset, clear::All, cursor::Show);
+        print!("{}{}{}{}", style::Reset, clear::All, cursor::Show, cursor::Goto(1, 1));
         process::exit(0);
     }).expect("Error handling CTRL+C");
 
@@ -131,10 +131,10 @@ fn main() {
     io::stdout().flush().unwrap();
 
     let mut falling_chars = vec![FallingChar::new(size_x, size_y)];
-    add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.2).unwrap();
+    add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.5).unwrap();
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.1).unwrap();
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.3).unwrap();
     }
 }
