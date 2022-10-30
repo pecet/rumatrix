@@ -13,4 +13,8 @@ pub struct Cli {
     /// Force height (y) of the screen
     #[arg(long, short='y')]
     pub size_y: Option<u16>,
+
+    /// Select color (1-8 inclusive) of fallers or 'rnd' for random
+    #[arg(long, short='c')]
+    pub color: Option<String>,
 }

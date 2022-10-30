@@ -15,7 +15,9 @@ use clap::{Parser, Subcommand};
 pub struct ProbabilityOutOfBoundsError;
 
 pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
-        max_x: u16, max_y: u16,
+        max_x: u16,
+        max_y: u16,
+        color: i32,
         probability_to_add: f64) -> Result<(), ProbabilityOutOfBoundsError> {
     if !(0.0..=1.0).contains(&probability_to_add) {
         return Err(ProbabilityOutOfBoundsError)
@@ -27,7 +29,7 @@ pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
 
     for _ in falling_chars.len()..max_fallers {
         if thread_rng().gen_bool(probability_to_add) {
-            falling_chars.push(FallingChar::new(max_x, max_y))
+            falling_chars.push(FallingChar::new(max_x, max_y, color))
         }
     }
     Ok(())
@@ -61,15 +63,33 @@ pub fn program_main() {
         _ => default_size,
     };
 
-    //
+    let color = match cli.color {
+        Some(color_str) => {
+            match color_str.parse::<i32>() {
+                Ok(color) => color,
+                Err(_) => {
+                    if color_str == "rnd" {
+                        -1
+                    } else {
+                        panic!("Incorrect value for color provided: {}", color_str)
+                    }
+                }
+            }
+        }
+        None => -1,
+    };
+    if color != -1 && !(1..=8).contains(&color) {
+        panic!("Incorrect value for color provided: {}", color)
+    }
+
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
-    let mut falling_chars = vec![FallingChar::new(size_x, size_y)];
-    add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.5).unwrap();
+    let mut falling_chars = vec![FallingChar::new(size_x, size_y, color)];
+    add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, 0.5).unwrap();
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, 0.3).unwrap();
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, 0.3).unwrap();
     }
 }

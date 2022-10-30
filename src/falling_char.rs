@@ -13,7 +13,7 @@ pub struct FallingChar {
 }
 
 impl FallingChar {
-    pub fn new(max_x: u16, max_y: u16) -> Self {
+    pub fn new(max_x: u16, max_y: u16, fg: i32) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
         let char_to_render = Some(FallingChar::get_random_char());
         //let char_to_render = None;
@@ -23,7 +23,7 @@ impl FallingChar {
             previous_positions: Vec::with_capacity(size.into()),
             max_position: Position { x: max_x, y: max_y },
             char_to_render,
-            fg: FallingChar::random_fg(),
+            fg: FallingChar::get_color_str(fg),
             size,
         }
     }
@@ -34,7 +34,12 @@ impl FallingChar {
 
     pub fn random_fg() -> (&'static str, &'static str) {
         let rand_value = thread_rng().gen_range(2..=8);
-        let color: (&str, &str) = match rand_value {
+        FallingChar::get_color_str(rand_value)
+    }
+
+    pub fn get_color_str(color: i32) -> (&'static str, &'static str) {
+        match color {
+            -1 => FallingChar::random_fg(), // will return any of below colors
             2 => (color::Red.fg_str(), color::LightRed.fg_str()),
             3 => (color::Green.fg_str(), color::LightGreen.fg_str()),
             4 => (color::Yellow.fg_str(), color::LightYellow.fg_str()),
@@ -43,8 +48,7 @@ impl FallingChar {
             7 => (color::Cyan.fg_str(), color::LightCyan.fg_str()),
             8 => (color::White.fg_str(), color::LightWhite.fg_str()),
             _ => (color::Black.fg_str(), color::LightBlack.fg_str()),
-        };
-        color
+        }
     }
 
     pub fn out_of_bounds(&self) -> bool {
