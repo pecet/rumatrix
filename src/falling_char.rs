@@ -66,9 +66,7 @@ impl FallingChar {
                 .unwrap();
 
             if !self.previous_positions.is_empty() {
-                let mut iterator = self.previous_positions.iter();
-
-                for (i, pos) in iterator.enumerate() {
+                for (i, pos) in  self.previous_positions.iter().enumerate() {
                     let char_to_render: char = self.chars_to_render[i];
                     write!(screen, "{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render).unwrap();
                 }
