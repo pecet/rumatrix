@@ -1,35 +1,40 @@
 use rand::{prelude::*, distributions};
 use termion::{screen::AlternateScreen, color, style, cursor};
-use std::{io::{Write, Stdout}, cmp::max};
+use std::{io::{Write, Stdout, repeat}, cmp::max, iter::repeat_with};
 use crate::position::*;
 
 pub struct FallingChar {
     position: Position,
     previous_positions: Vec<Position>,
     max_position: Position,
-    char_to_render: Option<char>,
+    chars_to_render: Vec<char>,
     fg: (&'static str, &'static str),
     size: u16,
+    count: u16,
 }
 
 impl FallingChar {
-    pub fn new(max_x: u16, max_y: u16, fg: i32) -> Self {
+    pub fn new(max_x: u16, max_y: u16, fg: i32, chars_to_use: &String) -> Self {
         let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
-        let char_to_render = Some(FallingChar::get_random_char());
-        //let char_to_render = None;
         let size = thread_rng().gen_range(max(2, max_y / 3)..max_y);
         Self {
             position,
             previous_positions: Vec::with_capacity(size.into()),
             max_position: Position { x: max_x, y: max_y },
-            char_to_render,
+            chars_to_render: FallingChar::get_random_chars(size, &chars_to_use) ,
             fg: FallingChar::get_color_str(fg),
             size,
+            count: 0,
         }
     }
 
-    pub fn get_random_char() -> char {
-        thread_rng().sample(distributions::Alphanumeric) as char
+    pub fn get_random_chars(size: u16, chars_to_use: &String) -> Vec<char> {
+        let mut random_chars = Vec::with_capacity(size.into());
+        for i in 0..size {
+            let char_index = thread_rng().gen_range(0..chars_to_use.len());
+            random_chars.push(chars_to_use.chars().nth(char_index.into()).expect("Char in string out of range"));
+        }
+        random_chars
     }
 
     pub fn random_fg() -> (&'static str, &'static str) {
@@ -57,10 +62,7 @@ impl FallingChar {
 
     pub fn render(&self, screen: &mut AlternateScreen<Stdout>) {
         if !self.out_of_bounds() {
-            let char_to_render = match self.char_to_render {
-                Some(char) => char,
-                None => FallingChar::get_random_char(),
-            };
+            let char_to_render: char = self.chars_to_render[0];
             write!(screen, "{}{}{}{}{}",
                 cursor::Goto(self.position.x, self.position.y),style::Bold, self.fg.1, char_to_render, style::NoBold)
                 .unwrap();
@@ -70,7 +72,8 @@ impl FallingChar {
                 let first_item = iterator.next().unwrap();
                 write!(screen, "{}{} ", cursor::Goto(first_item.x, first_item.y), self.fg.0).unwrap();
 
-                for pos in iterator {
+                for (i, pos) in iterator.enumerate() {
+                    let char_to_render: char = self.chars_to_render[i];
                     write!(screen, "{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render).unwrap();
                 }
             }

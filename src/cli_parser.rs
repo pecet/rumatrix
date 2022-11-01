@@ -21,4 +21,8 @@ pub struct Cli {
     /// Number of fallers
     #[arg(long, short='n')]
     pub no_fallers: Option<usize>,
+
+    /// Chars to use, if not specified use default list
+    #[arg(long, short='u')]
+    pub chars_to_use: Option<String>,
 }

@@ -14,12 +14,16 @@ use clap::{Parser, Subcommand};
 #[derive(Debug)]
 pub struct ProbabilityOutOfBoundsError;
 
-pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
+pub fn add_and_retire_fallers (
+        falling_chars: &mut Vec<FallingChar>,
         max_x: u16,
         max_y: u16,
         color: i32,
         max_fallers: usize,
-        probability_to_add: f64) -> Result<(), ProbabilityOutOfBoundsError> {
+        probability_to_add: f64,
+        chars_to_use: &String,
+    ) -> Result<(), ProbabilityOutOfBoundsError> {
+
     if !(0.0..=1.0).contains(&probability_to_add) {
         return Err(ProbabilityOutOfBoundsError)
     }
@@ -29,7 +33,7 @@ pub fn add_and_retire_fallers(falling_chars: &mut Vec<FallingChar>,
 
     for _ in falling_chars.len()..max_fallers {
         if thread_rng().gen_bool(probability_to_add) {
-            falling_chars.push(FallingChar::new(max_x, max_y, color))
+            falling_chars.push(FallingChar::new(max_x, max_y, color, chars_to_use))
         }
     }
     Ok(())
@@ -90,14 +94,18 @@ pub fn program_main() {
         None => 100,
     };
 
+    let chars_to_use = match cli.chars_to_use {
+        Some(str) => str,
+        None => "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ01234567890!@$%^&*()_+".into(),
+    };
+
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
-    add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.5).unwrap();
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.3).unwrap();
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.3, &chars_to_use).unwrap();
     }
 }
