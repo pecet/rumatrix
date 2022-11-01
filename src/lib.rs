@@ -37,7 +37,10 @@ pub fn add_and_retire_fallers (
 
     for _ in falling_chars.len()..max_fallers {
         if thread_rng().gen_bool(probability_to_add) {
-            let position = Position {x: *positions.get().unwrap(), y: 1};
+            let position = Position {
+                x: *positions.get().expect("Cannot get random position from bag"),
+                y: 1,
+            };
             falling_chars.push(FallingChar::new(position, max_x, max_y, color, chars_to_use))
         }
     }
@@ -108,11 +111,19 @@ pub fn program_main() {
     io::stdout().flush().unwrap();
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
-    let mut vec = (1..=size_x).collect();
-    let mut position_bag = RandomVecBag::new(vec);
+    let mut position_bag = RandomVecBag::new((1..=size_x).collect());
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.22, &chars_to_use, &mut position_bag).unwrap();
+        add_and_retire_fallers(
+            &mut falling_chars,
+            size_x,
+            size_y,
+            color,
+            no_fallers,
+            0.22,
+            &chars_to_use,
+            &mut position_bag
+        ).expect("Cannot add/or retire fallers");
     }
 }

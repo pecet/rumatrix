@@ -14,7 +14,6 @@ pub struct FallingChar {
 
 impl FallingChar {
     pub fn new(position: Position, max_x: u16, max_y: u16, fg: i32, chars_to_use: &String) -> Self {
-        let position = Position { x: thread_rng().gen_range(1..=max_x), y: 1 };
         let size = thread_rng().gen_range(max(2, max_y / 3)..max_y);
         Self {
             position,
