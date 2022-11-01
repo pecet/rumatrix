@@ -80,7 +80,7 @@ pub fn program_main() {
                 }
             }
         }
-        None => -1,
+        None => 3, // green
     };
     if color != -1 && !(1..=8).contains(&color) {
         panic!("Incorrect value for color provided: {}", color)
@@ -106,6 +106,6 @@ pub fn program_main() {
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.3, &chars_to_use).unwrap();
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.22, &chars_to_use).unwrap();
     }
 }

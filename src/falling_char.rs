@@ -14,7 +14,7 @@ pub struct FallingChar {
 
 impl FallingChar {
     pub fn new(max_x: u16, max_y: u16, fg: i32, chars_to_use: &String) -> Self {
-        let position = Position { x: thread_rng().gen_range(1..max_x), y: 1 };
+        let position = Position { x: thread_rng().gen_range(1..=max_x), y: 1 };
         let size = thread_rng().gen_range(max(2, max_y / 3)..max_y);
         Self {
             position,
@@ -67,8 +67,6 @@ impl FallingChar {
 
             if !self.previous_positions.is_empty() {
                 let mut iterator = self.previous_positions.iter();
-                let first_item = iterator.next().unwrap();
-                write!(screen, "{}{} ", cursor::Goto(first_item.x, first_item.y), self.fg.0).unwrap();
 
                 for (i, pos) in iterator.enumerate() {
                     let char_to_render: char = self.chars_to_render[i];
