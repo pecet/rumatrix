@@ -1,27 +1,26 @@
 use rand::prelude::*;
 
-pub struct RandomVecBag<'a, T: Clone> {
-    current: &'a mut Vec<T>,
-    used: &'a mut Vec<T>,
+pub struct RandomVecBag<T: Clone> {
+    vec: Vec<T>,
+    pointer: usize,
 }
 
-impl<'a, T: Clone> RandomVecBag<'a, T> {
-    pub fn new(mut vec: &'a mut Vec<T>) -> RandomVecBag<'a, T> {
-        let rvb = RandomVecBag {
-            current: &mut vec,
-            used: &mut Vec::new(),
+impl<T: Clone> RandomVecBag<T> {
+    pub fn new(vec: Vec<T>) -> RandomVecBag<T> {
+        let mut rvb = RandomVecBag {
+            vec,
+            pointer: 0,
         };
-        rvb.current.shuffle(&mut thread_rng());
+        rvb.vec.shuffle(&mut thread_rng());
         rvb
     }
 
-    pub fn pop(&'a mut self) -> T {
-        if self.current.is_empty() {
-            self.current = self.used;
-            self.used = &mut Vec::new();
+    pub fn get(&mut self) -> Option<&T> {
+        if self.pointer >= self.vec.len() {
+            self.pointer = 0;
         }
-        let element = self.current.pop();
-        self.used.push(element.clone().unwrap()); // TODO: Remove unwraps, return Option<T>
-        element.unwrap()
+        let element = self.vec.get(self.pointer);
+        self.pointer += 1;
+        element
     }
 }

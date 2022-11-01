@@ -37,7 +37,7 @@ pub fn add_and_retire_fallers (
 
     for _ in falling_chars.len()..max_fallers {
         if thread_rng().gen_bool(probability_to_add) {
-            let position = Position {x: positions.pop(), y: 1};
+            let position = Position {x: *positions.get().unwrap(), y: 1};
             falling_chars.push(FallingChar::new(position, max_x, max_y, color, chars_to_use))
         }
     }
@@ -109,7 +109,7 @@ pub fn program_main() {
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
     let mut vec = (1..=size_x).collect();
-    let mut position_bag = RandomVecBag::new(&mut vec);
+    let mut position_bag = RandomVecBag::new(vec);
 
     loop {
         main_loop(&mut falling_chars);
