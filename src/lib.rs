@@ -112,7 +112,7 @@ pub fn program_main() {
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
     let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size_x) * 3);
-     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
+    // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
     for _ in 1..=3 {
         vec.extend(1..=size_x);
     }
