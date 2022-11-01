@@ -54,7 +54,7 @@ pub fn main_loop(falling_chars: &mut [FallingChar]) {
         f.advance();
     }
     screen.flush().unwrap(); // copy alternate screen to main screen
-    thread::sleep(Duration::from_millis(33));
+    thread::sleep(Duration::from_millis(22));
 }
 
 pub fn program_main() {
@@ -111,7 +111,12 @@ pub fn program_main() {
     io::stdout().flush().unwrap();
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
-    let mut position_bag = RandomVecBag::new((1..=size_x).collect());
+    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size_x) * 3);
+     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
+    for _ in 1..=3 {
+        vec.extend(1..=size_x);
+    }
+    let mut position_bag = RandomVecBag::new(vec);
 
     loop {
         main_loop(&mut falling_chars);
