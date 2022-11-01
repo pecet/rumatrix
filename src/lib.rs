@@ -4,6 +4,7 @@ pub mod cli_parser;
 use crate::falling_char::*;
 use crate::cli_parser::*;
 
+use position::Position;
 use rand::prelude::*;
 use termion::{style, clear, cursor, terminal_size, screen::IntoAlternateScreen};
 
@@ -22,6 +23,7 @@ pub fn add_and_retire_fallers (
         max_fallers: usize,
         probability_to_add: f64,
         chars_to_use: &String,
+        positions: &mut Vec<u16>,
     ) -> Result<(), ProbabilityOutOfBoundsError> {
 
     if !(0.0..=1.0).contains(&probability_to_add) {
@@ -33,7 +35,11 @@ pub fn add_and_retire_fallers (
 
     for _ in falling_chars.len()..max_fallers {
         if thread_rng().gen_bool(probability_to_add) {
-            falling_chars.push(FallingChar::new(max_x, max_y, color, chars_to_use))
+            if positions.is_empty() {
+                *positions = get_bag_of_positions(max_x);
+            }
+            let position = Position {x: positions.pop().expect("Cannot pop position"), y: 1};
+            falling_chars.push(FallingChar::new(position, max_x, max_y, color, chars_to_use))
         }
     }
     Ok(())
@@ -47,6 +53,12 @@ pub fn main_loop(falling_chars: &mut [FallingChar]) {
     }
     screen.flush().unwrap(); // copy alternate screen to main screen
     thread::sleep(Duration::from_millis(33));
+}
+
+pub fn get_bag_of_positions(max: u16) -> Vec<u16> {
+    let mut position_bag: Vec<u16> = (1..=max).collect();
+    position_bag.shuffle(&mut thread_rng());
+    position_bag
 }
 
 pub fn program_main() {
@@ -103,9 +115,10 @@ pub fn program_main() {
     io::stdout().flush().unwrap();
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
+    let mut position_bag = get_bag_of_positions(size_x);
 
     loop {
         main_loop(&mut falling_chars);
-        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.22, &chars_to_use).unwrap();
+        add_and_retire_fallers(&mut falling_chars, size_x, size_y, color, no_fallers, 0.22, &chars_to_use, &mut position_bag).unwrap();
     }
 }
