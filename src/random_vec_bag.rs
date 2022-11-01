@@ -21,7 +21,7 @@ impl<T: Clone> RandomVecBag<T> {
             self.used = Vec::new();
         }
         let element = self.current.pop();
-        self.used.push(element.clone().unwrap());
+        self.used.push(element.clone().unwrap()); // TODO: Remove unwraps, return Option<T>
         element.unwrap()
     }
 }
