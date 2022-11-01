@@ -108,7 +108,8 @@ pub fn program_main() {
     io::stdout().flush().unwrap();
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
-    let mut position_bag = RandomVecBag::new((1..=size_x).collect());
+    let mut vec = (1..=size_x).collect();
+    let mut position_bag = RandomVecBag::new(&mut vec);
 
     loop {
         main_loop(&mut falling_chars);
