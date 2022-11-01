@@ -6,9 +6,9 @@ use crate::cli_parser::*;
 
 use rand::prelude::*;
 use termion::{style, clear, cursor, terminal_size, screen::IntoAlternateScreen};
-use std::default;
+
 use std::{process, thread, time::Duration, io::{self, Write}};
-use clap::{Parser, Subcommand};
+use clap::Parser;
 
 
 #[derive(Debug)]
@@ -96,7 +96,7 @@ pub fn program_main() {
 
     let chars_to_use = match cli.chars_to_use {
         Some(str) => str,
-        None => "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ01234567890!@$%^&*()_+".into(),
+        None => "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ01234567890!@$%^&*()_+|{}[]<>?!~".into(),
     };
 
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);

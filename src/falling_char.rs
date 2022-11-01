@@ -1,6 +1,6 @@
-use rand::{prelude::*, distributions};
+use rand::prelude::*;
 use termion::{screen::AlternateScreen, color, style, cursor};
-use std::{io::{Write, Stdout, repeat}, cmp::max, iter::repeat_with};
+use std::{io::{Write, Stdout}, cmp::max};
 use crate::position::*;
 
 pub struct FallingChar {
@@ -10,7 +10,6 @@ pub struct FallingChar {
     chars_to_render: Vec<char>,
     fg: (&'static str, &'static str),
     size: u16,
-    count: u16,
 }
 
 impl FallingChar {
@@ -21,18 +20,17 @@ impl FallingChar {
             position,
             previous_positions: Vec::with_capacity(size.into()),
             max_position: Position { x: max_x, y: max_y },
-            chars_to_render: FallingChar::get_random_chars(size, &chars_to_use) ,
+            chars_to_render: FallingChar::get_random_chars(size, chars_to_use) ,
             fg: FallingChar::get_color_str(fg),
             size,
-            count: 0,
         }
     }
 
     pub fn get_random_chars(size: u16, chars_to_use: &String) -> Vec<char> {
         let mut random_chars = Vec::with_capacity(size.into());
-        for i in 0..size {
+        for _ in 0..size {
             let char_index = thread_rng().gen_range(0..chars_to_use.len());
-            random_chars.push(chars_to_use.chars().nth(char_index.into()).expect("Char in string out of range"));
+            random_chars.push(chars_to_use.chars().nth(char_index).expect("Char in string out of range"));
         }
         random_chars
     }
