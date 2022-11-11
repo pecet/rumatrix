@@ -1,26 +1,38 @@
-use rand::prelude::*;
-use termion::{screen::AlternateScreen, color, style, cursor};
-use std::{io::{Write, Stdout}, cmp::max};
 use crate::position::*;
+use rand::prelude::*;
+use std::{
+    cmp::max,
+    io::{Stdout, Write},
+};
+use termion::{color, cursor, screen::AlternateScreen, style};
 
 pub struct FallingChar {
     position: Position,
     previous_positions: Vec<Position>,
     max_position: Position,
     chars_to_render: Vec<char>,
-    fg: (&'static str, &'static str),
+    color_fmt: String,
+    color_lighter_fmt: String,
     size: u16,
 }
 
 impl FallingChar {
-    pub fn new(position: Position, max_x: u16, max_y: u16, fg: i32, chars_to_use: &String) -> Self {
+    pub fn new(
+        position: Position,
+        max_x: u16,
+        max_y: u16,
+        color_fmt: String,
+        color_lighter_fmt: String,
+        chars_to_use: &String,
+    ) -> Self {
         let size = thread_rng().gen_range(max(2, max_y / 3)..max_y);
         Self {
             position,
             previous_positions: Vec::with_capacity(size.into()),
             max_position: Position { x: max_x, y: max_y },
-            chars_to_render: FallingChar::get_random_chars(size, chars_to_use) ,
-            fg: FallingChar::get_color_str(fg),
+            chars_to_render: FallingChar::get_random_chars(size, chars_to_use),
+            color_fmt,
+            color_lighter_fmt,
             size,
         }
     }
@@ -29,28 +41,14 @@ impl FallingChar {
         let mut random_chars = Vec::with_capacity(size.into());
         for _ in 0..size {
             let char_index = thread_rng().gen_range(0..chars_to_use.len());
-            random_chars.push(chars_to_use.chars().nth(char_index).expect("Char in string out of range"));
+            random_chars.push(
+                chars_to_use
+                    .chars()
+                    .nth(char_index)
+                    .expect("Char in string out of range"),
+            );
         }
         random_chars
-    }
-
-    pub fn random_fg() -> (&'static str, &'static str) {
-        let rand_value = thread_rng().gen_range(2..=8);
-        FallingChar::get_color_str(rand_value)
-    }
-
-    pub fn get_color_str(color: i32) -> (&'static str, &'static str) {
-        match color {
-            -1 => FallingChar::random_fg(), // will return any of below colors
-            2 => (color::Red.fg_str(), color::LightRed.fg_str()),
-            3 => (color::Green.fg_str(), color::LightGreen.fg_str()),
-            4 => (color::Yellow.fg_str(), color::LightYellow.fg_str()),
-            5 => (color::Blue.fg_str(), color::LightBlack.fg_str()),
-            6 => (color::Magenta.fg_str(), color::LightMagenta.fg_str()),
-            7 => (color::Cyan.fg_str(), color::LightCyan.fg_str()),
-            8 => (color::White.fg_str(), color::LightWhite.fg_str()),
-            _ => (color::Black.fg_str(), color::LightBlack.fg_str()),
-        }
     }
 
     pub fn out_of_bounds(&self) -> bool {
@@ -60,14 +58,28 @@ impl FallingChar {
     pub fn render(&self, screen: &mut AlternateScreen<Stdout>) {
         if !self.out_of_bounds() {
             let char_to_render: char = self.chars_to_render[0];
-            write!(screen, "{}{}{}{}{}",
-                cursor::Goto(self.position.x, self.position.y), style::Bold, self.fg.1, char_to_render, style::NoBold)
-                .unwrap();
+            write!(
+                screen,
+                "{}{}{}{}{}",
+                cursor::Goto(self.position.x, self.position.y),
+                style::Bold,
+                self.color_lighter_fmt,
+                char_to_render,
+                style::NoBold
+            )
+            .unwrap();
 
             if !self.previous_positions.is_empty() {
-                for (i, pos) in  self.previous_positions.iter().enumerate() {
+                for (i, pos) in self.previous_positions.iter().enumerate() {
                     let char_to_render: char = self.chars_to_render[i];
-                    write!(screen, "{}{}{}", cursor::Goto(pos.x, pos.y), self.fg.0, char_to_render).unwrap();
+                    write!(
+                        screen,
+                        "{}{}{}",
+                        cursor::Goto(pos.x, pos.y),
+                        self.color_fmt,
+                        char_to_render
+                    )
+                    .unwrap();
                 }
             }
         }
