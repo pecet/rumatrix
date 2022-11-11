@@ -19,6 +19,7 @@ use std::{
     io::{self, Write},
     process, thread,
     time::Duration,
+    cmp::min,
 };
 
 #[derive(Debug)]
@@ -77,16 +78,16 @@ pub fn add_and_retire_fallers(
 }
 
 pub fn main_loop(falling_chars: &mut [FallingChar]) {
-    let startTime = SystemTime::now();
+    let start_time = SystemTime::now();
     let mut screen = io::stdout().into_alternate_screen().unwrap();
     for f in falling_chars.iter_mut() {
         f.render(&mut screen);
         f.advance();
     }
     screen.flush().unwrap(); // copy alternate screen to main screen
-    let duration = startTime.elapsed().expect("Cannot get duration");
+    let duration = start_time.elapsed().expect("Cannot get duration");
     thread::sleep(Duration::from_millis(
-        33 - u64::try_from(duration.as_millis()).unwrap(),
+        33 - min(u64::try_from(duration.as_millis()).unwrap(), 33),
     ));
 }
 
