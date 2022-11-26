@@ -19,28 +19,29 @@ pub struct FallingChar {
 
 impl FallingChar {
     pub fn new(
+        rng: &mut ThreadRng,
         position: Position,
         max_position: Position,
         color_fmt: String,
         color_lighter_fmt: String,
         chars_to_use: &String,
     ) -> Self {
-        let size = thread_rng().gen_range(max(2, max_position.y / 3)..max_position.y);
+        let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
             position,
             previous_positions: Vec::with_capacity(size.into()),
             max_position,
-            chars_to_render: FallingChar::get_random_chars(size, chars_to_use),
+            chars_to_render: FallingChar::get_random_chars(rng, size, chars_to_use),
             color_fmt,
             color_lighter_fmt,
             size,
         }
     }
 
-    pub fn get_random_chars(size: u16, chars_to_use: &String) -> Vec<char> {
+    pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &String) -> Vec<char> {
         let mut random_chars = Vec::with_capacity(size.into());
         for _ in 0..size {
-            let char_index = thread_rng().gen_range(0..chars_to_use.len());
+            let char_index = rng.gen_range(0..chars_to_use.len());
             random_chars.push(
                 chars_to_use
                     .chars()

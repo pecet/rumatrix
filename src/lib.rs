@@ -40,6 +40,7 @@ pub fn get_color(color: i32) -> Box<dyn ColorPair> {
 
 
 pub fn add_and_retire_fallers(
+    rng: &mut ThreadRng,
     falling_chars: &mut Vec<FallingChar>,
     max: Position,
     color_fmt: String,
@@ -57,7 +58,7 @@ pub fn add_and_retire_fallers(
     falling_chars.retain(|f| !f.out_of_bounds());
 
     for _ in falling_chars.len()..max_fallers {
-        if thread_rng().gen_bool(probability_to_add) {
+        if rng.gen_bool(probability_to_add) {
             let position = Position {
                 x: *positions
                     .get()
@@ -65,6 +66,7 @@ pub fn add_and_retire_fallers(
                 y: 1,
             };
             falling_chars.push(FallingChar::new(
+                rng,
                 position,
                 max,
                 color_fmt.clone(),
@@ -142,6 +144,7 @@ add_color_pair!(White, LightWhite);
 
 pub fn program_main() {
     let cli = Cli::parse();
+    let mut rng = thread_rng();
 
     ctrlc::set_handler(|| {
         clean_exit();
@@ -199,6 +202,7 @@ pub fn program_main() {
         main_loop(&mut falling_chars);
         handle_keys(&mut stdin);
         add_and_retire_fallers(
+            &mut rng,
             &mut falling_chars,
             size,
             color.get_color_fmt(),
