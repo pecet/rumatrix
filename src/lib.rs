@@ -4,18 +4,20 @@ pub mod position;
 pub mod random_vec_bag;
 use crate::cli_parser::*;
 use crate::falling_char::*;
+use std::io::Read;
 use std::io::Stdin;
 use std::time::SystemTime;
 
 use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
+use termion::AsyncReader;
 use termion::event::Event;
 use termion::event::Key;
 use termion::input::TermRead;
 use termion::screen::IntoAlternateScreen;
 use termion::{
-    clear, color, color::Color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style, terminal_size
+    clear, color, color::Color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style, terminal_size, async_stdin
 };
 use termion::raw::IntoRawMode;
 
@@ -26,6 +28,7 @@ use std::{
     process, thread,
     time::Duration,
     cmp::min,
+    io::Bytes,
 };
 
 #[derive(Debug)]
@@ -83,8 +86,26 @@ pub fn add_and_retire_fallers(
     Ok(())
 }
 
+pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
+    let key_char = stdin.next();
+    if let Some(Ok(b'q')) = key_char {
+        clean_exit();
+    }
+}
+
+pub fn clean_exit() {
+    print!(
+        "{}{}{}{}",
+        style::Reset,
+        clear::All,
+        cursor::Show,
+        cursor::Goto(1, 1)
+    );
+    io::stdout().flush().unwrap();
+    process::exit(0);
+}
+
 pub fn main_loop(falling_chars: &mut [FallingChar]) {
-    let start_time = SystemTime::now();
     let mut screen = io::stdout().into_raw_mode().unwrap().into_alternate_screen().unwrap();
 
     write!(screen, "{}", ToMainScreen).unwrap();
@@ -95,11 +116,6 @@ pub fn main_loop(falling_chars: &mut [FallingChar]) {
     }
     screen.flush().unwrap(); // flush alternate screen
     drop(screen); // copy alternate screen to main screen
-
-    let duration = start_time.elapsed().expect("Cannot get duration");
-    thread::sleep(Duration::from_millis(
-        33 - min(u64::try_from(duration.as_millis()).unwrap(), 33),
-    ));
 }
 
 pub trait ColorPair {
@@ -134,15 +150,7 @@ pub fn program_main() {
     let cli = Cli::parse();
 
     ctrlc::set_handler(|| {
-        print!(
-            "{}{}{}{}",
-            style::Reset,
-            clear::All,
-            cursor::Show,
-            cursor::Goto(1, 1)
-        );
-        io::stdout().flush().unwrap();
-        process::exit(0);
+        clean_exit();
     })
     .expect("Error handling CTRL+C");
 
@@ -194,9 +202,12 @@ pub fn program_main() {
 
     color::Black.fg_str();
     color::Rgb(12,12,12).fg_string();
+    let mut stdin = async_stdin().bytes();
 
     loop {
+        handle_keys(&mut stdin);
         main_loop(&mut falling_chars);
+        handle_keys(&mut stdin);
         add_and_retire_fallers(
             &mut falling_chars,
             size_x,
@@ -209,6 +220,5 @@ pub fn program_main() {
             &mut position_bag,
         )
         .expect("Cannot add/or retire fallers");
-        //handle_keys();
     }
 }
