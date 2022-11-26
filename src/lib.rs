@@ -4,20 +4,25 @@ pub mod position;
 pub mod random_vec_bag;
 use crate::cli_parser::*;
 use crate::falling_char::*;
+use std::io::Stdin;
 use std::time::SystemTime;
 
 use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
+use termion::event::Event;
+use termion::event::Key;
+use termion::input::TermRead;
+use termion::screen::IntoAlternateScreen;
 use termion::{
-    clear, color, color::Color, cursor, screen::IntoAlternateScreen, style, terminal_size
+    clear, color, color::Color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style, terminal_size
 };
 use termion::raw::IntoRawMode;
 
 use clap::Parser;
 use std::{
     fs,
-    io::{self, Write, stdout},
+    io::{self, Write, stdout, stdin},
     process, thread,
     time::Duration,
     cmp::min,
@@ -80,13 +85,17 @@ pub fn add_and_retire_fallers(
 
 pub fn main_loop(falling_chars: &mut [FallingChar]) {
     let start_time = SystemTime::now();
-    let mut stdout = io::stdout().into_raw_mode().unwrap();
+    let mut screen = io::stdout().into_raw_mode().unwrap().into_alternate_screen().unwrap();
+
+    write!(screen, "{}", ToMainScreen).unwrap();
 
     for f in falling_chars.iter_mut() {
-        f.render(&mut stdout);
+        f.render(&mut screen);
         f.advance();
     }
-    stdout.flush().unwrap();
+    screen.flush().unwrap(); // flush alternate screen
+    drop(screen); // copy alternate screen to main screen
+
     let duration = start_time.elapsed().expect("Cannot get duration");
     thread::sleep(Duration::from_millis(
         33 - min(u64::try_from(duration.as_millis()).unwrap(), 33),
@@ -200,5 +209,6 @@ pub fn program_main() {
             &mut position_bag,
         )
         .expect("Cannot add/or retire fallers");
+        //handle_keys();
     }
 }

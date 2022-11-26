@@ -4,7 +4,7 @@ use std::{
     cmp::max,
     io::{Stdout, Write},
 };
-use termion::{color, cursor, screen::AlternateScreen, style};
+use termion::{color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style};
 use termion::raw::RawTerminal;
 
 pub struct FallingChar {
@@ -56,7 +56,7 @@ impl FallingChar {
         self.position.y >= self.max_position.y + self.size || self.position.x > self.max_position.x
     }
 
-    pub fn render(&self, screen: &mut RawTerminal<Stdout>) {
+    pub fn render(&self, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
         if !self.out_of_bounds() {
             let char_to_render: char = self.chars_to_render[0];
             write!(
