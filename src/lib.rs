@@ -10,13 +10,14 @@ use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
 use termion::{
-    clear, color, color::Color, cursor, screen::IntoAlternateScreen, style, terminal_size,
+    clear, color, color::Color, cursor, screen::IntoAlternateScreen, style, terminal_size
 };
+use termion::raw::IntoRawMode;
 
 use clap::Parser;
 use std::{
     fs,
-    io::{self, Write},
+    io::{self, Write, stdout},
     process, thread,
     time::Duration,
     cmp::min,
@@ -79,12 +80,13 @@ pub fn add_and_retire_fallers(
 
 pub fn main_loop(falling_chars: &mut [FallingChar]) {
     let start_time = SystemTime::now();
-    let mut screen = io::stdout().into_alternate_screen().unwrap();
+    let mut stdout = io::stdout().into_raw_mode().unwrap();
+
     for f in falling_chars.iter_mut() {
-        f.render(&mut screen);
+        f.render(&mut stdout);
         f.advance();
     }
-    screen.flush().unwrap(); // copy alternate screen to main screen
+    stdout.flush().unwrap();
     let duration = start_time.elapsed().expect("Cannot get duration");
     thread::sleep(Duration::from_millis(
         33 - min(u64::try_from(duration.as_millis()).unwrap(), 33),
