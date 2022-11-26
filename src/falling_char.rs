@@ -4,8 +4,8 @@ use std::{
     cmp::max,
     io::{Stdout, Write},
 };
-use termion::{color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style};
 use termion::raw::RawTerminal;
+use termion::{cursor, screen::AlternateScreen, style};
 
 pub struct FallingChar {
     position: Position,

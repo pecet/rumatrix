@@ -5,30 +5,21 @@ pub mod random_vec_bag;
 use crate::cli_parser::*;
 use crate::falling_char::*;
 use std::io::Read;
-use std::io::Stdin;
-use std::time::SystemTime;
 
 use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
 use termion::AsyncReader;
-use termion::event::Event;
-use termion::event::Key;
-use termion::input::TermRead;
-use termion::screen::IntoAlternateScreen;
-use termion::{
-    clear, color, color::Color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style, terminal_size, async_stdin
-};
+
 use termion::raw::IntoRawMode;
+use termion::screen::IntoAlternateScreen;
+use termion::{async_stdin, clear, color, cursor, screen::ToMainScreen, style, terminal_size};
 
 use clap::Parser;
 use std::{
-    fs,
-    io::{self, Write, stdout, stdin},
-    process, thread,
-    time::Duration,
-    cmp::min,
     io::Bytes,
+    io::{self, Write},
+    process,
 };
 
 #[derive(Debug)]
@@ -106,7 +97,11 @@ pub fn clean_exit() {
 }
 
 pub fn main_loop(falling_chars: &mut [FallingChar]) {
-    let mut screen = io::stdout().into_raw_mode().unwrap().into_alternate_screen().unwrap();
+    let mut screen = io::stdout()
+        .into_raw_mode()
+        .unwrap()
+        .into_alternate_screen()
+        .unwrap();
 
     write!(screen, "{}", ToMainScreen).unwrap();
 
@@ -134,7 +129,7 @@ macro_rules! add_color_pair {
                 color::$light_name.fg_str().to_string()
             }
         }
-    }
+    };
 }
 
 add_color_pair!(Black, LightBlack);
@@ -163,7 +158,7 @@ pub fn program_main() {
         _ => default_size,
     };
 
-    let mut color: Box<dyn ColorPair>;
+    let color: Box<dyn ColorPair>;
 
     color = match cli.color {
         Some(color_str) => match color_str.parse::<i32>() {
@@ -199,9 +194,6 @@ pub fn program_main() {
         vec.extend(1..=size_x);
     }
     let mut position_bag = RandomVecBag::new(vec);
-
-    color::Black.fg_str();
-    color::Rgb(12,12,12).fg_string();
     let mut stdin = async_stdin().bytes();
 
     loop {
