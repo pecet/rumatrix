@@ -38,10 +38,10 @@ pub fn get_color(color: i32) -> Box<dyn ColorPair> {
     }
 }
 
+
 pub fn add_and_retire_fallers(
     falling_chars: &mut Vec<FallingChar>,
-    max_x: u16,
-    max_y: u16,
+    max: Position,
     color_fmt: String,
     color_lighter_fmt: String,
     max_fallers: usize,
@@ -66,8 +66,7 @@ pub fn add_and_retire_fallers(
             };
             falling_chars.push(FallingChar::new(
                 position,
-                max_x,
-                max_y,
+                max,
                 color_fmt.clone(),
                 color_lighter_fmt.clone(),
                 chars_to_use,
@@ -150,17 +149,16 @@ pub fn program_main() {
     .expect("Error handling CTRL+C");
 
     let default_size = terminal_size().expect("Cannot get terminal size!");
+    let default_size = Position { x: default_size.0, y: default_size.1 };
 
-    let (size_x, size_y) = match (cli.size_x, cli.size_y) {
-        (Some(x), Some(y)) => (x, y),
-        (Some(x), None) => (x, default_size.1),
-        (None, Some(y)) => (default_size.0, y),
+    let size = match (cli.size_x, cli.size_y) {
+        (Some(x), Some(y)) => Position { x, y },
+        (Some(x), None) => Position { x, y: default_size.y },
+        (None, Some(y)) => Position { x: default_size.x, y },
         _ => default_size,
     };
 
-    let color: Box<dyn ColorPair>;
-
-    color = match cli.color {
+    let color = match cli.color {
         Some(color_str) => match color_str.parse::<i32>() {
             Ok(color) => get_color(color),
             Err(_) => panic!("Incorrect value for color provided: {}", color_str),
@@ -188,10 +186,10 @@ pub fn program_main() {
     io::stdout().flush().unwrap();
 
     let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
-    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size_x) * 3);
+    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
     for _ in 1..=3 {
-        vec.extend(1..=size_x);
+        vec.extend(1..=size.x);
     }
     let mut position_bag = RandomVecBag::new(vec);
     let mut stdin = async_stdin().bytes();
@@ -202,8 +200,7 @@ pub fn program_main() {
         handle_keys(&mut stdin);
         add_and_retire_fallers(
             &mut falling_chars,
-            size_x,
-            size_y,
+            size,
             color.get_color_fmt(),
             color.get_color_lighter_fmt(),
             no_fallers,

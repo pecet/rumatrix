@@ -20,17 +20,16 @@ pub struct FallingChar {
 impl FallingChar {
     pub fn new(
         position: Position,
-        max_x: u16,
-        max_y: u16,
+        max_position: Position,
         color_fmt: String,
         color_lighter_fmt: String,
         chars_to_use: &String,
     ) -> Self {
-        let size = thread_rng().gen_range(max(2, max_y / 3)..max_y);
+        let size = thread_rng().gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
             position,
             previous_positions: Vec::with_capacity(size.into()),
-            max_position: Position { x: max_x, y: max_y },
+            max_position,
             chars_to_render: FallingChar::get_random_chars(size, chars_to_use),
             color_fmt,
             color_lighter_fmt,
