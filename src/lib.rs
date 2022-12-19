@@ -2,33 +2,28 @@ pub mod cli_parser;
 pub mod falling_char;
 pub mod position;
 pub mod random_vec_bag;
+pub mod faller_adder;
 use crate::cli_parser::*;
+use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
+use std::cell::RefCell;
 use std::io::Read;
-use std::io::Stdin;
-use std::time::SystemTime;
+use std::rc::Rc;
 
 use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
 use termion::AsyncReader;
-use termion::event::Event;
-use termion::event::Key;
-use termion::input::TermRead;
-use termion::screen::IntoAlternateScreen;
-use termion::{
-    clear, color, color::Color, cursor, screen::{AlternateScreen, ToAlternateScreen, ToMainScreen}, style, terminal_size, async_stdin
-};
+
 use termion::raw::IntoRawMode;
+use termion::screen::IntoAlternateScreen;
+use termion::{async_stdin, clear, color, cursor, screen::ToMainScreen, style, terminal_size};
 
 use clap::Parser;
 use std::{
-    fs,
-    io::{self, Write, stdout, stdin},
-    process, thread,
-    time::Duration,
-    cmp::min,
     io::Bytes,
+    io::{self, Write},
+    process,
 };
 
 #[derive(Debug)]
@@ -45,45 +40,6 @@ pub fn get_color(color: i32) -> Box<dyn ColorPair> {
         8 => Box::new(color::White),
         _ => Box::new(color::Black),
     }
-}
-
-pub fn add_and_retire_fallers(
-    falling_chars: &mut Vec<FallingChar>,
-    max_x: u16,
-    max_y: u16,
-    color_fmt: String,
-    color_lighter_fmt: String,
-    max_fallers: usize,
-    probability_to_add: f64,
-    chars_to_use: &String,
-    positions: &mut RandomVecBag<u16>,
-) -> Result<(), ProbabilityOutOfBoundsError> {
-    if !(0.0..=1.0).contains(&probability_to_add) {
-        return Err(ProbabilityOutOfBoundsError);
-    }
-
-    // retire old fallers
-    falling_chars.retain(|f| !f.out_of_bounds());
-
-    for _ in falling_chars.len()..max_fallers {
-        if thread_rng().gen_bool(probability_to_add) {
-            let position = Position {
-                x: *positions
-                    .get()
-                    .expect("Cannot get random position from bag"),
-                y: 1,
-            };
-            falling_chars.push(FallingChar::new(
-                position,
-                max_x,
-                max_y,
-                color_fmt.clone(),
-                color_lighter_fmt.clone(),
-                chars_to_use,
-            ))
-        }
-    }
-    Ok(())
 }
 
 pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
@@ -105,8 +61,13 @@ pub fn clean_exit() {
     process::exit(0);
 }
 
-pub fn main_loop(falling_chars: &mut [FallingChar]) {
-    let mut screen = io::stdout().into_raw_mode().unwrap().into_alternate_screen().unwrap();
+pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
+    let mut falling_chars = falling_chars.borrow_mut();
+    let mut screen = io::stdout()
+        .into_raw_mode()
+        .unwrap()
+        .into_alternate_screen()
+        .unwrap();
 
     write!(screen, "{}", ToMainScreen).unwrap();
 
@@ -134,7 +95,7 @@ macro_rules! add_color_pair {
                 color::$light_name.fg_str().to_string()
             }
         }
-    }
+    };
 }
 
 add_color_pair!(Black, LightBlack);
@@ -148,6 +109,7 @@ add_color_pair!(White, LightWhite);
 
 pub fn program_main() {
     let cli = Cli::parse();
+    let mut rng = thread_rng();
 
     ctrlc::set_handler(|| {
         clean_exit();
@@ -155,17 +117,16 @@ pub fn program_main() {
     .expect("Error handling CTRL+C");
 
     let default_size = terminal_size().expect("Cannot get terminal size!");
+    let default_size = Position { x: default_size.0, y: default_size.1 };
 
-    let (size_x, size_y) = match (cli.size_x, cli.size_y) {
-        (Some(x), Some(y)) => (x, y),
-        (Some(x), None) => (x, default_size.1),
-        (None, Some(y)) => (default_size.0, y),
+    let size = match (cli.size_x, cli.size_y) {
+        (Some(x), Some(y)) => Position { x, y },
+        (Some(x), None) => Position { x, y: default_size.y },
+        (None, Some(y)) => Position { x: default_size.x, y },
         _ => default_size,
     };
 
-    let mut color: Box<dyn ColorPair>;
-
-    color = match cli.color {
+    let color = match cli.color {
         Some(color_str) => match color_str.parse::<i32>() {
             Ok(color) => get_color(color),
             Err(_) => panic!("Incorrect value for color provided: {}", color_str),
@@ -192,33 +153,32 @@ pub fn program_main() {
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
-    let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
-    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size_x) * 3);
+    let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
+    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
     for _ in 1..=3 {
-        vec.extend(1..=size_x);
+        vec.extend(1..=size.x);
     }
     let mut position_bag = RandomVecBag::new(vec);
-
-    color::Black.fg_str();
-    color::Rgb(12,12,12).fg_string();
     let mut stdin = async_stdin().bytes();
+    let falling_char_ref1 = Rc::clone(&falling_chars);
+    let mut faller_adder: FallerAdder = FallerAdder {
+        rng: &mut rng,
+        falling_chars: falling_char_ref1,
+        max_position: size,
+        color_fmt: color.get_color_fmt(),
+        color_lighter_fmt: color.get_color_lighter_fmt(),
+        max_fallers: no_fallers,
+        probability_to_add: 0.22,
+        chars_to_use: &chars_to_use,
+        positions: &mut position_bag,
+    };
 
     loop {
+        let falling_char_ref2 = Rc::clone(&falling_chars);
         handle_keys(&mut stdin);
-        main_loop(&mut falling_chars);
+        main_loop(falling_char_ref2);
         handle_keys(&mut stdin);
-        add_and_retire_fallers(
-            &mut falling_chars,
-            size_x,
-            size_y,
-            color.get_color_fmt(),
-            color.get_color_lighter_fmt(),
-            no_fallers,
-            0.22,
-            &chars_to_use,
-            &mut position_bag,
-        )
-        .expect("Cannot add/or retire fallers");
+        faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
     }
 }

@@ -7,10 +7,7 @@ pub struct RandomVecBag<T: Clone> {
 
 impl<T: Clone> RandomVecBag<T> {
     pub fn new(vec: Vec<T>) -> RandomVecBag<T> {
-        let mut rvb = RandomVecBag {
-            vec,
-            pointer: 0,
-        };
+        let mut rvb = RandomVecBag { vec, pointer: 0 };
         rvb.vec.shuffle(&mut thread_rng());
         rvb
     }
@@ -24,7 +21,8 @@ impl<T: Clone> RandomVecBag<T> {
         }
         // randomize order BEFORE pointer, so when we return there again bag will be randomize
         if self.pointer > 0 {
-            self.vec.swap(self.pointer - 1, thread_rng().gen_range(0..self.pointer));
+            self.vec
+                .swap(self.pointer - 1, thread_rng().gen_range(0..self.pointer));
         }
         let element = self.vec.get(self.pointer);
         self.pointer += 1;
