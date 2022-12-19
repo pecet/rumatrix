@@ -153,7 +153,7 @@ pub fn program_main() {
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
-    let mut falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
+    let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
     let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
     for _ in 1..=3 {
@@ -161,7 +161,7 @@ pub fn program_main() {
     }
     let mut position_bag = RandomVecBag::new(vec);
     let mut stdin = async_stdin().bytes();
-    let mut falling_char_ref1 = Rc::clone(&falling_chars);
+    let falling_char_ref1 = Rc::clone(&falling_chars);
     let mut faller_adder: FallerAdder = FallerAdder {
         rng: &mut rng,
         falling_chars: falling_char_ref1,
@@ -175,10 +175,10 @@ pub fn program_main() {
     };
 
     loop {
-        let mut falling_char_ref2 = Rc::clone(&falling_chars);
+        let falling_char_ref2 = Rc::clone(&falling_chars);
         handle_keys(&mut stdin);
         main_loop(falling_char_ref2);
         handle_keys(&mut stdin);
-        faller_adder.add_and_retire();
+        faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
     }
 }
