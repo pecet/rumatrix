@@ -2,9 +2,13 @@ pub mod cli_parser;
 pub mod falling_char;
 pub mod position;
 pub mod random_vec_bag;
+pub mod faller_adder;
 use crate::cli_parser::*;
+use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
+use std::cell::RefCell;
 use std::io::Read;
+use std::rc::Rc;
 
 use position::Position;
 use rand::prelude::*;
@@ -38,46 +42,6 @@ pub fn get_color(color: i32) -> Box<dyn ColorPair> {
     }
 }
 
-
-pub fn add_and_retire_fallers(
-    rng: &mut ThreadRng,
-    falling_chars: &mut Vec<FallingChar>,
-    max: Position,
-    color_fmt: String,
-    color_lighter_fmt: String,
-    max_fallers: usize,
-    probability_to_add: f64,
-    chars_to_use: &String,
-    positions: &mut RandomVecBag<u16>,
-) -> Result<(), ProbabilityOutOfBoundsError> {
-    if !(0.0..=1.0).contains(&probability_to_add) {
-        return Err(ProbabilityOutOfBoundsError);
-    }
-
-    // retire old fallers
-    falling_chars.retain(|f| !f.out_of_bounds());
-
-    for _ in falling_chars.len()..max_fallers {
-        if rng.gen_bool(probability_to_add) {
-            let position = Position {
-                x: *positions
-                    .get()
-                    .expect("Cannot get random position from bag"),
-                y: 1,
-            };
-            falling_chars.push(FallingChar::new(
-                rng,
-                position,
-                max,
-                color_fmt.clone(),
-                color_lighter_fmt.clone(),
-                chars_to_use,
-            ))
-        }
-    }
-    Ok(())
-}
-
 pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
     let key_char = stdin.next();
     if let Some(Ok(b'q')) = key_char {
@@ -97,7 +61,8 @@ pub fn clean_exit() {
     process::exit(0);
 }
 
-pub fn main_loop(falling_chars: &mut [FallingChar]) {
+pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
+    let mut falling_chars = falling_chars.borrow_mut();
     let mut screen = io::stdout()
         .into_raw_mode()
         .unwrap()
@@ -188,7 +153,7 @@ pub fn program_main() {
     print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
     io::stdout().flush().unwrap();
 
-    let mut falling_chars: Vec<FallingChar> = Vec::with_capacity(no_fallers);
+    let mut falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
     let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
     for _ in 1..=3 {
@@ -196,22 +161,24 @@ pub fn program_main() {
     }
     let mut position_bag = RandomVecBag::new(vec);
     let mut stdin = async_stdin().bytes();
+    let mut falling_char_ref1 = Rc::clone(&falling_chars);
+    let mut faller_adder: FallerAdder = FallerAdder {
+        rng: &mut rng,
+        falling_chars: falling_char_ref1,
+        max_position: size,
+        color_fmt: color.get_color_fmt(),
+        color_lighter_fmt: color.get_color_lighter_fmt(),
+        max_fallers: no_fallers,
+        probability_to_add: 0.22,
+        chars_to_use: &chars_to_use,
+        positions: &mut position_bag,
+    };
 
     loop {
+        let mut falling_char_ref2 = Rc::clone(&falling_chars);
         handle_keys(&mut stdin);
-        main_loop(&mut falling_chars);
+        main_loop(falling_char_ref2);
         handle_keys(&mut stdin);
-        add_and_retire_fallers(
-            &mut rng,
-            &mut falling_chars,
-            size,
-            color.get_color_fmt(),
-            color.get_color_lighter_fmt(),
-            no_fallers,
-            0.22,
-            &chars_to_use,
-            &mut position_bag,
-        )
-        .expect("Cannot add/or retire fallers");
+        faller_adder.add_and_retire();
     }
 }
