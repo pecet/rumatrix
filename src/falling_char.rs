@@ -39,24 +39,14 @@ impl FallingChar {
     }
 
     pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &String) -> Vec<char> {
-        let mut random_chars = Vec::with_capacity(size.into());
-        for _ in 0..size {
-            let char_index = rng.gen_range(0..chars_to_use.len());
-            random_chars.push(
-                chars_to_use
-                    .chars()
-                    .nth(char_index)
-                    .expect("Char in string out of range"),
-            );
-        }
-        random_chars
+        chars_to_use.chars().choose_multiple(rng, size as usize)
     }
 
     pub fn out_of_bounds(&self) -> bool {
         self.position.y >= self.max_position.y + self.size || self.position.x > self.max_position.x
     }
 
-    pub fn render(&self, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
+    pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
         if !self.out_of_bounds() {
             let char_to_render: char = self.chars_to_render[0];
             write!(
@@ -72,7 +62,11 @@ impl FallingChar {
 
             if !self.previous_positions.is_empty() {
                 for (i, pos) in self.previous_positions.iter().enumerate() {
-                    let char_to_render: char = self.chars_to_render[i];
+                    let char_to_render: char = if i == 0 {
+                        self.chars_to_render.choose(rng).unwrap().to_owned()
+                    } else {
+                        self.chars_to_render[i]
+                    };
                     write!(
                         screen,
                         "{}{}{}",
