@@ -3,4 +3,3 @@ ruMatrix is falling Matrix like characters program for terminal written in Rust,
 
 This is basically my hello world when trying to learn rust - critique welcome, PRs are not (trying to learn for myself).
 
-License will be added later.
