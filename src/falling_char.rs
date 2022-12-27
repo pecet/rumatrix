@@ -24,7 +24,7 @@ impl FallingChar {
         max_position: Position,
         color_fmt: String,
         color_lighter_fmt: String,
-        chars_to_use: &String,
+        chars_to_use: &str,
     ) -> Self {
         let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
@@ -38,10 +38,10 @@ impl FallingChar {
         }
     }
 
-    pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &String) -> Vec<char> {
+    pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &str) -> Vec<char> {
         let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
         // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
-        while(random_chars.len() < size as usize) {
+        while random_chars.len() < size as usize {
             let amount_left =  (size as usize) - random_chars.len();
             random_chars.extend(chars_to_use.chars().choose_multiple(rng, amount_left));
         }
