@@ -39,7 +39,13 @@ impl FallingChar {
     }
 
     pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &String) -> Vec<char> {
-        chars_to_use.chars().choose_multiple(rng, size as usize)
+        let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
+        // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
+        while(random_chars.len() < size as usize) {
+            let amount_left =  (size as usize) - random_chars.len();
+            random_chars.extend(chars_to_use.chars().choose_multiple(rng, amount_left));
+        }
+        random_chars
     }
 
     pub fn out_of_bounds(&self) -> bool {
