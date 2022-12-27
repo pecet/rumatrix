@@ -53,6 +53,10 @@ impl FallingChar {
     }
 
     pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
+        let hardcoded_msg = "     The Matrix has you...     ".to_owned();
+        let hardcoded_position = Position {x: 100, y: 25};
+        let mut already_placed = vec![false; hardcoded_msg.len()];
+
         if !self.out_of_bounds() {
             let char_to_render: char = self.chars_to_render[0];
             write!(
@@ -69,10 +73,21 @@ impl FallingChar {
             if !self.previous_positions.is_empty() {
                 for (i, pos) in self.previous_positions.iter().enumerate() {
                     let char_to_render: char = if i == 0 {
-                        self.chars_to_render.choose(rng).unwrap().to_owned()
+                        if pos.y == hardcoded_position.y && pos.x >= hardcoded_position.x && pos.x < hardcoded_position.x + hardcoded_msg.len() as u16 {
+                            let nth = pos.x - hardcoded_position.x;
+                            if !already_placed[nth as usize] {
+                                already_placed[nth as usize] = true;
+                                hardcoded_msg.chars().nth(nth as usize).unwrap()
+                            } else {
+                                self.chars_to_render.choose(rng).unwrap().to_owned()
+                            }
+                        } else {
+                            self.chars_to_render.choose(rng).unwrap().to_owned()
+                        }
                     } else {
                         self.chars_to_render[i]
                     };
+
                     write!(
                         screen,
                         "{}{}{}",
