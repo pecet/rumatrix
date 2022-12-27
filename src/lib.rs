@@ -15,6 +15,7 @@ use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
 use termion::AsyncReader;
 
+use termion::color::Rgb;
 use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 use termion::{async_stdin, clear, color, cursor, screen::ToMainScreen, style, terminal_size};
@@ -107,6 +108,35 @@ add_color_pair!(Magenta, LightMagenta);
 add_color_pair!(Cyan, LightCyan);
 add_color_pair!(White, LightWhite);
 
+impl ColorPair for color::Rgb {
+    fn get_color_fmt(&self) -> String {
+        self.fg_string().to_string()
+    }
+
+    fn get_color_lighter_fmt(&self) -> String {
+        let light_color = (self.0 as u16 + 50, self.1 as u16 + 50, self.2 as u16 + 50);
+        let light_color = (
+            if light_color.0 > 255 {
+                255
+            } else {
+                light_color.0
+            },
+            if light_color.1 > 255 {
+                255
+            } else {
+                light_color.1
+            },
+            if light_color.2 > 255 {
+                255
+            } else {
+                light_color.2
+            }
+        );
+        color::Rgb(light_color.0 as u8, light_color.1 as u8, light_color.2 as u8).fg_string().to_string()
+    }
+}
+
+
 pub fn program_main() {
     let cli = Cli::parse();
     let mut rng = thread_rng();
@@ -132,6 +162,18 @@ pub fn program_main() {
             Err(_) => panic!("Incorrect value for color provided: {}", color_str),
         },
         None => get_color(3), // green
+    };
+
+    let color = match cli.color_rgb {
+        Some(color_str) => {
+            let colors_str: Vec<_> = color_str.split(",").collect();
+            if colors_str.len() != 3 {
+                panic!("RGB color needs to be specified using following syntax: r,g,b e.g.: 128,128,255");
+            }
+            let colors_int: Vec<u8> = colors_str.iter().map(|s| s.parse().expect("Cannot convert color value to string")).collect();
+            Box::new(color::Rgb(colors_int[0], colors_int[1], colors_int[2]))
+        }
+        None => color,
     };
 
     let no_fallers = match cli.no_fallers {
