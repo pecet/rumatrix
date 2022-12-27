@@ -24,7 +24,7 @@ impl FallingChar {
         max_position: Position,
         color_fmt: String,
         color_lighter_fmt: String,
-        chars_to_use: &String,
+        chars_to_use: &str,
     ) -> Self {
         let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
@@ -38,16 +38,12 @@ impl FallingChar {
         }
     }
 
-    pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &String) -> Vec<char> {
-        let mut random_chars = Vec::with_capacity(size.into());
-        for _ in 0..size {
-            let char_index = rng.gen_range(0..chars_to_use.len());
-            random_chars.push(
-                chars_to_use
-                    .chars()
-                    .nth(char_index)
-                    .expect("Char in string out of range"),
-            );
+    pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &str) -> Vec<char> {
+        let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
+        // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
+        while random_chars.len() < size as usize {
+            let amount_left =  (size as usize) - random_chars.len();
+            random_chars.extend(chars_to_use.chars().choose_multiple(rng, amount_left));
         }
         random_chars
     }
@@ -56,7 +52,7 @@ impl FallingChar {
         self.position.y >= self.max_position.y + self.size || self.position.x > self.max_position.x
     }
 
-    pub fn render(&self, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
+    pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
         if !self.out_of_bounds() {
             let char_to_render: char = self.chars_to_render[0];
             write!(
@@ -72,7 +68,11 @@ impl FallingChar {
 
             if !self.previous_positions.is_empty() {
                 for (i, pos) in self.previous_positions.iter().enumerate() {
-                    let char_to_render: char = self.chars_to_render[i];
+                    let char_to_render: char = if i == 0 {
+                        self.chars_to_render.choose(rng).unwrap().to_owned()
+                    } else {
+                        self.chars_to_render[i]
+                    };
                     write!(
                         screen,
                         "{}{}{}",

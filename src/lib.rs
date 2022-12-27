@@ -15,7 +15,6 @@ use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
 use termion::AsyncReader;
 
-use termion::color::Rgb;
 use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 use termion::{async_stdin, clear, color, cursor, screen::ToMainScreen, style, terminal_size};
@@ -73,7 +72,7 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     write!(screen, "{}", ToMainScreen).unwrap();
 
     for f in falling_chars.iter_mut() {
-        f.render(&mut screen);
+        f.render(&mut thread_rng(), &mut screen);
         f.advance();
     }
     screen.flush().unwrap(); // flush alternate screen
@@ -110,7 +109,7 @@ add_color_pair!(White, LightWhite);
 
 impl ColorPair for color::Rgb {
     fn get_color_fmt(&self) -> String {
-        self.fg_string().to_string()
+        self.fg_string()
     }
 
     fn get_color_lighter_fmt(&self) -> String {
@@ -132,7 +131,7 @@ impl ColorPair for color::Rgb {
                 light_color.2
             }
         );
-        color::Rgb(light_color.0 as u8, light_color.1 as u8, light_color.2 as u8).fg_string().to_string()
+        color::Rgb(light_color.0 as u8, light_color.1 as u8, light_color.2 as u8).fg_string()
     }
 }
 
@@ -166,7 +165,7 @@ pub fn program_main() {
 
     let color = match cli.color_rgb {
         Some(color_str) => {
-            let colors_str: Vec<_> = color_str.split(",").collect();
+            let colors_str: Vec<_> = color_str.split(',').collect();
             if colors_str.len() != 3 {
                 panic!("RGB color needs to be specified using following syntax: r,g,b e.g.: 128,128,255");
             }
