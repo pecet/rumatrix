@@ -19,7 +19,7 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
 
-  clippy_check:
+  clippy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
@@ -27,4 +27,5 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+          # treat warnings as errors
+          args: --all-features -- -D warnings
