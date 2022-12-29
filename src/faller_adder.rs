@@ -16,6 +16,8 @@ pub struct FallerAdder<'a> {
     pub probability_to_add: f64,
     pub chars_to_use: &'a String,
     pub positions: &'a mut RandomVecBag<u16>,
+    pub message: Option<String>,
+    pub message_position: Option<Position>,
 }
 
 impl<'a> FallerAdder<'a> {
@@ -43,6 +45,8 @@ impl<'a> FallerAdder<'a> {
                     self.color_fmt.clone(),
                     self.color_lighter_fmt.clone(),
                     self.chars_to_use,
+                    self.message.clone(),
+                    self.message_position,
                 ))
             }
         }

@@ -15,6 +15,8 @@ pub struct FallingChar {
     color_fmt: String,
     color_lighter_fmt: String,
     size: u16,
+    message: Option<String>,
+    message_position: Option<Position>,
 }
 
 impl FallingChar {
@@ -25,6 +27,8 @@ impl FallingChar {
         color_fmt: String,
         color_lighter_fmt: String,
         chars_to_use: &str,
+        message: Option<String>,
+        message_position: Option<Position>
     ) -> Self {
         let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
@@ -35,6 +39,8 @@ impl FallingChar {
             color_fmt,
             color_lighter_fmt,
             size,
+            message,
+            message_position,
         }
     }
 
@@ -53,10 +59,6 @@ impl FallingChar {
     }
 
     pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
-        let hardcoded_msg = "     The Matrix has you...     ".to_owned();
-        let hardcoded_position = Position {x: 100, y: 25};
-        let mut already_placed = vec![false; hardcoded_msg.len()];
-
         if !self.out_of_bounds() {
             let char_to_render: char = self.chars_to_render[0];
             write!(
@@ -72,22 +74,19 @@ impl FallingChar {
 
             if !self.previous_positions.is_empty() {
                 for (i, pos) in self.previous_positions.iter().enumerate() {
-                    let char_to_render: char = if i == 0 {
-                        if pos.y == hardcoded_position.y && pos.x >= hardcoded_position.x && pos.x < hardcoded_position.x + hardcoded_msg.len() as u16 {
-                            let nth = pos.x - hardcoded_position.x;
-                            if !already_placed[nth as usize] {
-                                already_placed[nth as usize] = true;
-                                hardcoded_msg.chars().nth(nth as usize).unwrap()
-                            } else {
-                                self.chars_to_render.choose(rng).unwrap().to_owned()
+                    let mut char_to_render: char = self.chars_to_render[i];
+                    if i == 0 {
+                        char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
+                        // cannot chain if lets in Rust :(
+                        if let Some(message_position) = self.message_position {
+                            if let Some(message) = self.message.clone() {
+                                if pos.y == message_position.y && pos.x >= message_position.x && pos.x < message_position.x + message.len() as u16 {
+                                    let nth = (pos.x - message_position.x) as usize;
+                                    char_to_render = message.chars().nth(nth as usize).unwrap();
+                                }
                             }
-                        } else {
-                            self.chars_to_render.choose(rng).unwrap().to_owned()
                         }
-                    } else {
-                        self.chars_to_render[i]
-                    };
-
+                    }
                     write!(
                         screen,
                         "{}{}{}",

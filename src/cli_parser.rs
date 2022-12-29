@@ -29,4 +29,8 @@ pub struct Cli {
     /// Chars to use, if not specified use default list
     #[arg(long, short = 'u')]
     pub chars_to_use: Option<String>,
+
+    /// Message to show on the screen (default: no message)
+    #[arg(long = "msg", short = 'm')]
+    pub message: Option<String>,
 }

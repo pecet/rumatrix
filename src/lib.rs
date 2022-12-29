@@ -203,7 +203,15 @@ pub fn program_main() {
     let mut position_bag = RandomVecBag::new(vec);
     let mut stdin = async_stdin().bytes();
     let falling_char_ref1 = Rc::clone(&falling_chars);
-    let mut faller_adder: FallerAdder = FallerAdder {
+    let message_position = if let Some(message) = cli.message.clone() {
+        Some(Position{
+            x: (size.x - message.len() as u16) / 2,
+            y: size.y / 2,
+        })
+    } else {
+        None
+    };
+    let mut faller_adder = FallerAdder {
         rng: &mut rng,
         falling_chars: falling_char_ref1,
         max_position: size,
@@ -213,6 +221,8 @@ pub fn program_main() {
         probability_to_add: 0.22,
         chars_to_use: &chars_to_use,
         positions: &mut position_bag,
+        message: cli.message,
+        message_position,
     };
 
     loop {
