@@ -3,9 +3,11 @@ pub mod falling_char;
 pub mod position;
 pub mod random_vec_bag;
 pub mod faller_adder;
+pub mod message;
 use crate::cli_parser::*;
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
+use crate::message::Message;
 use std::cell::RefCell;
 use std::io::Read;
 use std::rc::Rc;
@@ -47,6 +49,13 @@ pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
     if let Some(Ok(b'q')) = key_char {
         clean_exit();
     }
+    if let Some(Ok(b'c')) = key_char {
+        print!(
+            "{}{}",
+            style::Reset,
+            clear::All
+        )
+    }
 }
 
 pub fn clean_exit() {
@@ -77,6 +86,7 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     }
     screen.flush().unwrap(); // flush alternate screen
     drop(screen); // copy alternate screen to main screen
+    std::thread::sleep(std::time::Duration::from_millis(1));
 }
 
 pub trait ColorPair {
@@ -203,7 +213,7 @@ pub fn program_main() {
     let mut position_bag = RandomVecBag::new(vec);
     let mut stdin = async_stdin().bytes();
     let falling_char_ref1 = Rc::clone(&falling_chars);
-    let mut faller_adder: FallerAdder = FallerAdder {
+    let mut faller_adder = FallerAdder {
         rng: &mut rng,
         falling_chars: falling_char_ref1,
         max_position: size,
@@ -213,6 +223,13 @@ pub fn program_main() {
         probability_to_add: 0.22,
         chars_to_use: &chars_to_use,
         positions: &mut position_bag,
+        message: cli.message.clone().map(|message| Message {
+            position: Position {
+                x: (size.x - message.len() as u16) / 2,
+                y: size.y / 2,
+            },
+            text: message,
+        }),
     };
 
     loop {

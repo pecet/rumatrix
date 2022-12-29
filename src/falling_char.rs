@@ -1,4 +1,4 @@
-use crate::position::*;
+use crate::{position::*, message::Message};
 use rand::prelude::*;
 use std::{
     cmp::max,
@@ -15,6 +15,7 @@ pub struct FallingChar {
     color_fmt: String,
     color_lighter_fmt: String,
     size: u16,
+    message: Option<Message>,
 }
 
 impl FallingChar {
@@ -25,6 +26,7 @@ impl FallingChar {
         color_fmt: String,
         color_lighter_fmt: String,
         chars_to_use: &str,
+        message: Option<Message>,
     ) -> Self {
         let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
@@ -35,6 +37,7 @@ impl FallingChar {
             color_fmt,
             color_lighter_fmt,
             size,
+            message,
         }
     }
 
@@ -68,11 +71,13 @@ impl FallingChar {
 
             if !self.previous_positions.is_empty() {
                 for (i, pos) in self.previous_positions.iter().enumerate() {
-                    let char_to_render: char = if i == 0 {
-                        self.chars_to_render.choose(rng).unwrap().to_owned()
-                    } else {
-                        self.chars_to_render[i]
-                    };
+                    let mut char_to_render: char = self.chars_to_render[i];
+                    if i == 0 {
+                        char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
+                        if let Some(message) = self.message.clone() {
+                            char_to_render = message.get_char_in_position(pos).unwrap_or(char_to_render);
+                        }
+                    }
                     write!(
                         screen,
                         "{}{}{}",
