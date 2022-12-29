@@ -1,4 +1,4 @@
-use crate::position::*;
+use crate::{position::*, message::Message};
 use rand::prelude::*;
 use std::{
     cmp::max,
@@ -15,8 +15,7 @@ pub struct FallingChar {
     color_fmt: String,
     color_lighter_fmt: String,
     size: u16,
-    message: Option<String>,
-    message_position: Option<Position>,
+    message: Option<Message>,
 }
 
 impl FallingChar {
@@ -27,8 +26,7 @@ impl FallingChar {
         color_fmt: String,
         color_lighter_fmt: String,
         chars_to_use: &str,
-        message: Option<String>,
-        message_position: Option<Position>
+        message: Option<Message>,
     ) -> Self {
         let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
         Self {
@@ -40,7 +38,6 @@ impl FallingChar {
             color_lighter_fmt,
             size,
             message,
-            message_position,
         }
     }
 
@@ -77,14 +74,8 @@ impl FallingChar {
                     let mut char_to_render: char = self.chars_to_render[i];
                     if i == 0 {
                         char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
-                        // cannot chain if lets in Rust :(
-                        if let Some(message_position) = self.message_position {
-                            if let Some(message) = self.message.clone() {
-                                if pos.y == message_position.y && pos.x >= message_position.x && pos.x < message_position.x + message.len() as u16 {
-                                    let nth = (pos.x - message_position.x) as usize;
-                                    char_to_render = message.chars().nth(nth as usize).unwrap();
-                                }
-                            }
+                        if let Some(message) = self.message.clone() {
+                            char_to_render = message.get_char_in_position(pos).unwrap_or(char_to_render);
                         }
                     }
                     write!(

@@ -1,7 +1,7 @@
 use std::{rc::Rc, cell::RefCell};
 
 use rand::prelude::*;
-use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position};
+use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position, message::Message};
 
 
 #[derive(Debug)]
@@ -16,8 +16,7 @@ pub struct FallerAdder<'a> {
     pub probability_to_add: f64,
     pub chars_to_use: &'a String,
     pub positions: &'a mut RandomVecBag<u16>,
-    pub message: Option<String>,
-    pub message_position: Option<Position>,
+    pub message: Option<Message>,
 }
 
 impl<'a> FallerAdder<'a> {
@@ -46,7 +45,6 @@ impl<'a> FallerAdder<'a> {
                     self.color_lighter_fmt.clone(),
                     self.chars_to_use,
                     self.message.clone(),
-                    self.message_position,
                 ))
             }
         }
