@@ -7,7 +7,7 @@ pub mod config;
 use crate::config::Config;
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
-use crate::message::Message;
+
 use std::cell::RefCell;
 use std::io::Read;
 use std::rc::Rc;
@@ -19,9 +19,9 @@ use termion::AsyncReader;
 
 use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
-use termion::{async_stdin, clear, color, cursor, screen::ToMainScreen, style, terminal_size};
+use termion::{async_stdin, clear, cursor, screen::ToMainScreen, style};
 
-use clap::Parser;
+
 use std::{
     io::Bytes,
     io::{self, Write},

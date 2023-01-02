@@ -1,7 +1,7 @@
 use std::{rc::Rc, cell::RefCell};
 
 use rand::prelude::*;
-use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position, message::Message, config::Config};
+use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position, config::Config};
 
 
 #[derive(Debug)]

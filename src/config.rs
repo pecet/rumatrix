@@ -1,6 +1,6 @@
 use clap::Parser;
 use derive_getters::Getters;
-use dyn_clone::{DynClone, clone_box};
+use dyn_clone::{DynClone};
 use termion::{terminal_size, color};
 use crate::{Position, message::Message};
 #[derive(Getters, Clone)]
@@ -78,14 +78,21 @@ impl Config {
             Some(str) => str,
             None => self.chars_to_use.clone(),
         };
+        self.chars_to_use = chars_to_use;
 
-        let message = cli.message.clone().map(|message| Message {
-            position: Position {
-                x: (size.x - message.len() as u16) / 2,
-                y: size.y / 2,
-            },
-            text: message,
-        });
+        let message = cli.message.clone().map(|message| {
+                if message.len() as u16 > size.x {
+                    panic!("Message size ({}) is bigger than maximum value of screen x coordinate ({})!", message.len(), size.x);
+                }
+                Message {
+                    position: Position {
+                        x: (size.x - message.len() as u16) / 2,
+                        y: size.y / 2,
+                    },
+                    text: message,
+                }
+            }
+        );
         self.message = message;
     }
 }
