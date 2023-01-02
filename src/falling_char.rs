@@ -28,10 +28,10 @@ impl FallingChar {
         chars_to_use: &str,
         message: Option<Message>,
     ) -> Self {
-        let size = rng.gen_range(max(2, max_position.y / 3)..max_position.y);
+        let size = rng.gen_range(max(1, max_position.y / 3)..=max_position.y);
         Self {
             position,
-            previous_positions: Vec::with_capacity(size.into()),
+            previous_positions: Vec::with_capacity(size as usize + 1usize),
             max_position,
             chars_to_render: FallingChar::get_random_chars(rng, size, chars_to_use),
             color_fmt,
@@ -51,12 +51,12 @@ impl FallingChar {
         random_chars
     }
 
-    pub fn out_of_bounds(&self) -> bool {
-        self.position.y >= self.max_position.y + self.size || self.position.x > self.max_position.x
+    pub fn should_be_retained(&self) -> bool {
+        !self.previous_positions.iter().all(|&pp| pp.is_out_of_bounds(&self.max_position))
     }
 
     pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
-        if !self.out_of_bounds() {
+        if !self.position.is_out_of_bounds(&self.max_position) {
             let char_to_render: char = self.chars_to_render[0];
             write!(
                 screen,
@@ -68,9 +68,11 @@ impl FallingChar {
                 style::NoBold
             )
             .unwrap();
+        }
 
-            if !self.previous_positions.is_empty() {
-                for (i, pos) in self.previous_positions.iter().enumerate() {
+        if !self.previous_positions.is_empty() {
+            for (i, pos) in self.previous_positions.iter().enumerate() {
+                if !pos.is_out_of_bounds(&self.max_position) {
                     let mut char_to_render: char = self.chars_to_render[i];
                     if i == 0 {
                         char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
