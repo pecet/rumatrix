@@ -104,7 +104,7 @@ impl Default for Config {
             screen_size: Position { x: default_size.0, y: default_size.1 },
             color_pair: Box::new(color::Green),
             no_fallers: 50,
-            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~".into(),
+            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),
             message: None,
         }
     }

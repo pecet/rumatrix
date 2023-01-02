@@ -73,7 +73,7 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     }
     screen.flush().unwrap(); // flush alternate screen
     drop(screen); // copy alternate screen to main screen
-    std::thread::sleep(std::time::Duration::from_millis(1));
+    std::thread::sleep(std::time::Duration::from_millis(2));
 }
 
 pub fn program_main() {

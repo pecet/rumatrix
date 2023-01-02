@@ -22,7 +22,7 @@ impl<'a> FallerAdder<'a> {
 
         let mut falling_chars = self.falling_chars.borrow_mut();
         // retire old fallers
-        falling_chars.retain(|f| !f.out_of_bounds());
+        falling_chars.retain(|f| f.should_be_retained());
 
         for _ in falling_chars.len()..*self.config.no_fallers() {
             if self.rng.gen_bool(self.probability_to_add) {
