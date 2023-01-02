@@ -86,43 +86,31 @@ pub fn program_main() {
     })
     .expect("Error handling CTRL+C");
 
-    // print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
-    // io::stdout().flush().unwrap();
+    print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
+    io::stdout().flush().unwrap();
 
+    let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(*config.no_fallers())));
+    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(config.screen_size().x) * 3);
+    // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
+    for _ in 1..=3 {
+        vec.extend(1..=config.screen_size().x);
+    }
+    let mut position_bag = RandomVecBag::new(vec);
+    let mut stdin = async_stdin().bytes();
+    let falling_char_ref1 = Rc::clone(&falling_chars);
+    let mut faller_adder = FallerAdder {
+        rng: &mut rng,
+        falling_chars: falling_char_ref1,
+        probability_to_add: 0.22,
+        positions: &mut position_bag,
+        config: &config,
+    };
 
-    // let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
-    // let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
-    // // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
-    // for _ in 1..=3 {
-    //     vec.extend(1..=size.x);
-    // }
-    // let mut position_bag = RandomVecBag::new(vec);
-    // let mut stdin = async_stdin().bytes();
-    // let falling_char_ref1 = Rc::clone(&falling_chars);
-    // let mut faller_adder = FallerAdder {
-    //     rng: &mut rng,
-    //     falling_chars: falling_char_ref1,
-    //     max_position: size,
-    //     color_fmt: color.get_color_fmt(),
-    //     color_lighter_fmt: color.get_color_lighter_fmt(),
-    //     max_fallers: no_fallers,
-    //     probability_to_add: 0.22,
-    //     chars_to_use: &chars_to_use,
-    //     positions: &mut position_bag,
-    //     message: cli.message.clone().map(|message| Message {
-    //         position: Position {
-    //             x: (size.x - message.len() as u16) / 2,
-    //             y: size.y / 2,
-    //         },
-    //         text: message,
-    //     }),
-    // };
-
-    // loop {
-    //     let falling_char_ref2 = Rc::clone(&falling_chars);
-    //     handle_keys(&mut stdin);
-    //     main_loop(falling_char_ref2);
-    //     handle_keys(&mut stdin);
-    //     faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
-    // }
+    loop {
+        let falling_char_ref2 = Rc::clone(&falling_chars);
+        handle_keys(&mut stdin);
+        main_loop(falling_char_ref2);
+        handle_keys(&mut stdin);
+        faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
+    }
 }
