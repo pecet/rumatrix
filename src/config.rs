@@ -176,34 +176,34 @@ impl ColorPair for color::Rgb {
 #[command(name = "ruMatrix")]
 #[command(author = "Piotr Czarny")]
 #[command(about = "cmatrix inspired program but in Rust", long_about = None)]
-pub struct Cli {
+struct Cli {
     /// Force width (x) of the screen
     #[arg(long, short = 'x')]
-    pub size_x: Option<u16>,
+    size_x: Option<u16>,
 
     /// Force height (y) of the screen
     #[arg(long, short = 'y')]
-    pub size_y: Option<u16>,
+    size_y: Option<u16>,
 
     /// Select color (1-8 inclusive) of fallers or 'rnd' for random
     #[arg(long, short = 'c')]
-    pub color: Option<String>,
+    color: Option<String>,
 
     /// Select color (r,g,b; 0-255 each) e.g. 50,50,255
     #[arg(long, short = 'C')]
-    pub color_rgb: Option<String>,
+    color_rgb: Option<String>,
 
     /// Number of fallers
     #[arg(long, short = 'n')]
-    pub no_fallers: Option<usize>,
+    no_fallers: Option<usize>,
 
     /// Chars to use, if not specified use default list
     #[arg(long, short = 'u')]
-    pub chars_to_use: Option<String>,
+    chars_to_use: Option<String>,
 
     /// Message to show on the screen (default: no message)
     #[arg(long = "msg", short = 'm')]
-    pub message: Option<String>,
+    message: Option<String>,
 }
 
 
