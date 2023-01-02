@@ -1,10 +1,10 @@
-pub mod cli_parser;
 pub mod falling_char;
 pub mod position;
 pub mod random_vec_bag;
 pub mod faller_adder;
 pub mod message;
-use crate::cli_parser::*;
+pub mod config;
+use crate::config::Config;
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
 use crate::message::Message;
@@ -30,19 +30,6 @@ use std::{
 
 #[derive(Debug)]
 pub struct ProbabilityOutOfBoundsError;
-
-pub fn get_color(color: i32) -> Box<dyn ColorPair> {
-    match color {
-        2 => Box::new(color::Red),
-        3 => Box::new(color::Green),
-        4 => Box::new(color::Yellow),
-        5 => Box::new(color::Blue),
-        6 => Box::new(color::Magenta),
-        7 => Box::new(color::Cyan),
-        8 => Box::new(color::White),
-        _ => Box::new(color::Black),
-    }
-}
 
 pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
     let key_char = stdin.next();
@@ -89,154 +76,53 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     std::thread::sleep(std::time::Duration::from_millis(1));
 }
 
-pub trait ColorPair {
-    fn get_color_fmt(&self) -> String;
-    fn get_color_lighter_fmt(&self) -> String;
-}
-
-macro_rules! add_color_pair {
-    ($name: ident, $light_name: ident) => {
-        impl ColorPair for color::$name {
-            fn get_color_fmt(&self) -> String {
-                self.fg_str().to_string()
-            }
-
-            fn get_color_lighter_fmt(&self) -> String {
-                color::$light_name.fg_str().to_string()
-            }
-        }
-    };
-}
-
-add_color_pair!(Black, LightBlack);
-add_color_pair!(Red, LightRed);
-add_color_pair!(Green, LightGreen);
-add_color_pair!(Yellow, LightYellow);
-add_color_pair!(Blue, LightBlue);
-add_color_pair!(Magenta, LightMagenta);
-add_color_pair!(Cyan, LightCyan);
-add_color_pair!(White, LightWhite);
-
-impl ColorPair for color::Rgb {
-    fn get_color_fmt(&self) -> String {
-        self.fg_string()
-    }
-
-    fn get_color_lighter_fmt(&self) -> String {
-        let light_color = (self.0 as u16 + 50, self.1 as u16 + 50, self.2 as u16 + 50);
-        let light_color = (
-            if light_color.0 > 255 {
-                255
-            } else {
-                light_color.0
-            },
-            if light_color.1 > 255 {
-                255
-            } else {
-                light_color.1
-            },
-            if light_color.2 > 255 {
-                255
-            } else {
-                light_color.2
-            }
-        );
-        color::Rgb(light_color.0 as u8, light_color.1 as u8, light_color.2 as u8).fg_string()
-    }
-}
-
-
 pub fn program_main() {
-    let cli = Cli::parse();
     let mut rng = thread_rng();
+    let mut config = Config::new_with_defaults();
+    config.parse_cli();
 
     ctrlc::set_handler(|| {
         clean_exit();
     })
     .expect("Error handling CTRL+C");
 
-    let default_size = terminal_size().expect("Cannot get terminal size!");
-    let default_size = Position { x: default_size.0, y: default_size.1 };
+    // print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
+    // io::stdout().flush().unwrap();
 
-    let size = match (cli.size_x, cli.size_y) {
-        (Some(x), Some(y)) => Position { x, y },
-        (Some(x), None) => Position { x, y: default_size.y },
-        (None, Some(y)) => Position { x: default_size.x, y },
-        _ => default_size,
-    };
 
-    let color = match cli.color {
-        Some(color_str) => match color_str.parse::<i32>() {
-            Ok(color) => get_color(color),
-            Err(_) => panic!("Incorrect value for color provided: {}", color_str),
-        },
-        None => get_color(3), // green
-    };
+    // let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
+    // let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
+    // // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
+    // for _ in 1..=3 {
+    //     vec.extend(1..=size.x);
+    // }
+    // let mut position_bag = RandomVecBag::new(vec);
+    // let mut stdin = async_stdin().bytes();
+    // let falling_char_ref1 = Rc::clone(&falling_chars);
+    // let mut faller_adder = FallerAdder {
+    //     rng: &mut rng,
+    //     falling_chars: falling_char_ref1,
+    //     max_position: size,
+    //     color_fmt: color.get_color_fmt(),
+    //     color_lighter_fmt: color.get_color_lighter_fmt(),
+    //     max_fallers: no_fallers,
+    //     probability_to_add: 0.22,
+    //     chars_to_use: &chars_to_use,
+    //     positions: &mut position_bag,
+    //     message: cli.message.clone().map(|message| Message {
+    //         position: Position {
+    //             x: (size.x - message.len() as u16) / 2,
+    //             y: size.y / 2,
+    //         },
+    //         text: message,
+    //     }),
+    // };
 
-    let color = match cli.color_rgb {
-        Some(color_str) => {
-            let colors_str: Vec<_> = color_str.split(',').collect();
-            if colors_str.len() != 3 {
-                panic!("RGB color needs to be specified using following syntax: r,g,b e.g.: 128,128,255");
-            }
-            let colors_int: Vec<u8> = colors_str.iter().map(|s| s.parse().expect("Cannot convert color value to string")).collect();
-            Box::new(color::Rgb(colors_int[0], colors_int[1], colors_int[2]))
-        }
-        None => color,
-    };
-
-    let no_fallers = match cli.no_fallers {
-        Some(no) => match no {
-            0 => 1,
-            _ => no,
-        },
-        None => 100,
-    };
-
-    let chars_to_use = match cli.chars_to_use {
-        Some(str) => str,
-        None => {
-            "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~"
-                .into()
-        }
-    };
-
-    print!("{}{}{}", clear::All, cursor::Hide, style::Reset);
-    io::stdout().flush().unwrap();
-
-    let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(no_fallers)));
-    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(size.x) * 3);
-    // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
-    for _ in 1..=3 {
-        vec.extend(1..=size.x);
-    }
-    let mut position_bag = RandomVecBag::new(vec);
-    let mut stdin = async_stdin().bytes();
-    let falling_char_ref1 = Rc::clone(&falling_chars);
-    let mut faller_adder = FallerAdder {
-        rng: &mut rng,
-        falling_chars: falling_char_ref1,
-        max_position: size,
-        color_fmt: color.get_color_fmt(),
-        color_lighter_fmt: color.get_color_lighter_fmt(),
-        max_fallers: no_fallers,
-        probability_to_add: 0.22,
-        chars_to_use: &chars_to_use,
-        positions: &mut position_bag,
-        message: cli.message.clone().map(|message| Message {
-            position: Position {
-                x: (size.x - message.len() as u16) / 2,
-                y: size.y / 2,
-            },
-            text: message,
-        }),
-    };
-
-    loop {
-        let falling_char_ref2 = Rc::clone(&falling_chars);
-        handle_keys(&mut stdin);
-        main_loop(falling_char_ref2);
-        handle_keys(&mut stdin);
-        faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
-    }
+    // loop {
+    //     let falling_char_ref2 = Rc::clone(&falling_chars);
+    //     handle_keys(&mut stdin);
+    //     main_loop(falling_char_ref2);
+    //     handle_keys(&mut stdin);
+    //     faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
+    // }
 }

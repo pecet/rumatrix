@@ -11,3 +11,5 @@ termion = "2.0"
 rand = "0.8"
 ctrlc = "3.2"
 clap = { version = "4.0", features = ["derive"] }
+derive-getters = "0.2"
+dyn-clone = "1.0"
