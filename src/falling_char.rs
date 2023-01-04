@@ -7,18 +7,28 @@ use std::{
 use termion::raw::RawTerminal;
 use termion::{cursor, screen::AlternateScreen, style};
 
+/// Structure to hold `FallingChar` currently to be displayed on the screen
 pub struct FallingChar {
+    /// Current position on the screen
     position: Position,
+    /// Vector of previous positions to display trail
     previous_positions: Vec<Position>,
+    /// Upper bounds for position
     max_position: Position,
+    /// Chars which will be used to render both current position of `FallingChar` and its trail
     chars_to_render: Vec<char>,
+    /// ANSI formatting string for displaying trail's color
     color_fmt: String,
+    /// ANSI formatting string for displaying current position's color
     color_lighter_fmt: String,
+    /// Size of the trail
     size: u16,
+    /// Optional message to be displayed on the screen
     message: Option<Message>,
 }
 
 impl FallingChar {
+    /// Create new instance of [FallingChar]
     pub fn new(
         rng: &mut ThreadRng,
         position: Position,
@@ -41,7 +51,8 @@ impl FallingChar {
         }
     }
 
-    pub fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &str) -> Vec<char> {
+    /// Get randomly ordered chars to be used in rendering process
+    fn get_random_chars(rng: &mut ThreadRng, size: u16, chars_to_use: &str) -> Vec<char> {
         let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
         // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
         while random_chars.len() < size as usize {
@@ -51,10 +62,12 @@ impl FallingChar {
         random_chars
     }
 
+    /// Should this instance of [FallingChar] be retained or cleaned by [FallerAdder]
     pub fn should_be_retained(&self) -> bool {
         !self.previous_positions.iter().all(|&pp| pp.is_out_of_bounds(&self.max_position))
     }
 
+    /// Render charater and its trail on the `screen`
     pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
         if !self.position.is_out_of_bounds(&self.max_position) {
             let char_to_render: char = self.chars_to_render[0];
@@ -93,6 +106,7 @@ impl FallingChar {
         }
     }
 
+    /// Advance char position
     pub fn advance(&mut self) {
         if self.previous_positions.len() >= self.size.into() {
             self.previous_positions.remove(0);

@@ -1,18 +1,29 @@
+#![allow(missing_docs)]
+// only because derive(Getters) give me error about functions derived by it do not have docs
+// most likely there is better way to do this
+
 use clap::Parser;
 use derive_getters::Getters;
 use dyn_clone::{DynClone};
 use termion::{terminal_size, color};
 use crate::{Position, message::Message};
 #[derive(Getters, Clone)]
+/// Structure holding shared configuration of the program
 pub struct Config {
+    /// Current screen size
     screen_size: Position,
+    /// Configured [ColorPair] which will be used by the fallers
     color_pair: Box<dyn ColorPair>,
+    /// Maximum number of fallers
     no_fallers: usize,
+    /// [String] which characters will be used for displaying [FallingChar] and its trail
     chars_to_use: String,
+    /// Optional message which will be displayed on the screen
     message: Option<Message>,
 }
 
 impl Config {
+    /// Get color first 8 colors (1-8) from terminal 16 color pallette via number
     fn get_color(color: i32) -> Box<dyn ColorPair> {
         match color {
             2 => Box::new(color::Red),
@@ -26,14 +37,19 @@ impl Config {
         }
     }
 
+    /// Get RGB color
     fn get_rgb_color(r: u8, g: u8, b: u8) -> Box<dyn ColorPair> {
         Box::new(color::Rgb(r, g, b))
     }
 
+    /// Create new [Config] instance with default values
     pub fn new_with_defaults() -> Self {
         Default::default()
     }
 
+    /// Parse [Config] from [Cli] (via clap).
+    ///
+    /// Overwrite defaults with parameters from Cli, or do not if parameter is not present.
     pub fn parse_cli(&mut self) {
         let cli = Cli::parse();
 
@@ -111,8 +127,11 @@ impl Default for Config {
 }
 
 
+/// Trait to return ANSI formatting string for both head and trail color of [FallingChar]
 pub trait ColorPair: DynClone {
+    /// Get ANSI formatting string for head color
     fn get_color_fmt(&self) -> String;
+    /// Get ANSI formatting string for trail color
     fn get_color_lighter_fmt(&self) -> String;
 }
 
