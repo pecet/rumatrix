@@ -1,8 +1,17 @@
+#![warn(missing_docs)]
+//! Library used for ruMatrix
+
+/// [FallingChar] module
 pub mod falling_char;
+/// [Position] module
 pub mod position;
+/// [RandomVecBag] module
 pub mod random_vec_bag;
+/// [FallerAdder] module
 pub mod faller_adder;
+/// [Message] module
 pub mod message;
+/// [Config] module
 pub mod config;
 use crate::config::Config;
 use crate::faller_adder::FallerAdder;
@@ -28,9 +37,7 @@ use std::{
     process,
 };
 
-#[derive(Debug)]
-pub struct ProbabilityOutOfBoundsError;
-
+/// Handle keyboard input
 pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
     let key_char = stdin.next();
     if let Some(Ok(b'q')) = key_char {
@@ -45,6 +52,7 @@ pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
     }
 }
 
+/// Executed when exiting program, clears screen and shows cursor again
 pub fn clean_exit() {
     print!(
         "{}{}{}{}",
@@ -57,6 +65,7 @@ pub fn clean_exit() {
     process::exit(0);
 }
 
+/// Main loop of the program
 pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     let mut falling_chars = falling_chars.borrow_mut();
     let mut screen = io::stdout()
@@ -76,6 +85,7 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     std::thread::sleep(std::time::Duration::from_millis(2));
 }
 
+/// Main function of the program
 pub fn program_main() {
     let mut rng = thread_rng();
     let mut config = Config::new_with_defaults();
