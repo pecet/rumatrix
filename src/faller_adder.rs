@@ -1,7 +1,7 @@
 use std::{rc::Rc, cell::RefCell};
 
 use rand::prelude::*;
-use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position, config::Config, colors::Colors, colors::Color};
+use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position, config::Config};
 
 
 /// Error thrown if `probabilty_to_add` in [FallerAdder] is not `0.0 <= probability <= 1.0`

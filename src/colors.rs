@@ -1,4 +1,4 @@
-use derive_getters::Getters;
+
 use serde::{Serialize, Deserialize};
 use termion::color;
 
@@ -25,6 +25,17 @@ pub enum Color {
         /// Blue
         b: u8,
     },
+}
+
+macro_rules! add_offset_to_u8 {
+    ($num: ident, $offset: ident) => {
+        let mut $num = *$num as u16;
+        $num += $offset;
+        if $num > 255 {
+            $num = 255;
+        }
+        let $num = $num as u8;
+    }
 }
 
 impl Color {
@@ -75,25 +86,10 @@ impl Color {
                 }
             }
             Color::RGB { r, g, b } => {
-                let mut r = *r as u16;
-                let mut g = *g as u16;
-                let mut b = *b as u16;
-                let hardcoded_offset = 15;
-                r += hardcoded_offset;
-                g += hardcoded_offset;
-                b += hardcoded_offset;
-                if r > 255 {
-                    r = 255;
-                }
-                if g > 255 {
-                    g = 255;
-                }
-                if b > 255 {
-                    b = 255;
-                }
-                let r = r as u8;
-                let g = g as u8;
-                let b = b as u8;
+                let hardcoded_offset = 15u16;
+                add_offset_to_u8!(r, hardcoded_offset);
+                add_offset_to_u8!(g, hardcoded_offset);
+                add_offset_to_u8!(b, hardcoded_offset);
                 Color::RGB {r, g, b}
             }
         }

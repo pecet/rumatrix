@@ -5,7 +5,7 @@
 use clap::Parser;
 use derive_getters::Getters;
 use serde::{Serialize, Deserialize};
-use termion::{terminal_size, color};
+use termion::{terminal_size};
 use crate::{Position, message::Message, colors::{Colors, Color}};
 #[derive(Getters, Clone, Serialize, Deserialize)]
 /// Structure holding shared configuration of the program
