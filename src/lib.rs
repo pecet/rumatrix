@@ -1,5 +1,5 @@
-#![warn(missing_docs)]
 //! Library used for ruMatrix
+#![warn(missing_docs)]
 
 /// [FallingChar] module
 pub mod falling_char;
@@ -13,6 +13,8 @@ pub mod faller_adder;
 pub mod message;
 /// [Config] module
 pub mod config;
+/// [Colors] and [Color] module
+pub mod colors;
 use crate::config::Config;
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;

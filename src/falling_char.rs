@@ -1,4 +1,4 @@
-use crate::{position::*, message::Message, config::Colors};
+use crate::{position::*, message::Message, colors::Colors};
 use rand::prelude::*;
 use std::{
     cmp::max,
