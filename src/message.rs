@@ -1,8 +1,10 @@
+use serde::{Serialize, Deserialize};
+
 use crate::Position;
 
 /// Struct holds message currently displayed on screen with its:
 /// `position` and `text`
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Message {
     /// [Position] of message on the screen
     pub position: Position,

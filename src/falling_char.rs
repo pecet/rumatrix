@@ -1,4 +1,4 @@
-use crate::{position::*, message::Message};
+use crate::{position::*, message::Message, config::Colors};
 use rand::prelude::*;
 use std::{
     cmp::max,
@@ -8,7 +8,7 @@ use termion::raw::RawTerminal;
 use termion::{cursor, screen::AlternateScreen, style};
 
 /// Structure to hold `FallingChar` currently to be displayed on the screen
-pub struct FallingChar {
+pub struct FallingChar<'a> {
     /// Current position on the screen
     position: Position,
     /// Vector of previous positions to display trail
@@ -17,24 +17,21 @@ pub struct FallingChar {
     max_position: Position,
     /// Chars which will be used to render both current position of `FallingChar` and its trail
     chars_to_render: Vec<char>,
-    /// ANSI formatting string for displaying trail's color
-    color_fmt: String,
-    /// ANSI formatting string for displaying current position's color
-    color_lighter_fmt: String,
+    /// Colors to be used in char display
+    colors: &'a Colors,
     /// Size of the trail
     size: u16,
     /// Optional message to be displayed on the screen
     message: Option<Message>,
 }
 
-impl FallingChar {
+impl<'a> FallingChar<'a> {
     /// Create new instance of [FallingChar]
     pub fn new(
         rng: &mut ThreadRng,
         position: Position,
         max_position: Position,
-        color_fmt: String,
-        color_lighter_fmt: String,
+        colors: &'a Colors,
         chars_to_use: &str,
         message: Option<Message>,
     ) -> Self {
@@ -44,8 +41,7 @@ impl FallingChar {
             previous_positions: Vec::with_capacity(size as usize + 1usize),
             max_position,
             chars_to_render: FallingChar::get_random_chars(rng, size, chars_to_use),
-            color_fmt,
-            color_lighter_fmt,
+            colors,
             size,
             message,
         }
@@ -76,7 +72,7 @@ impl FallingChar {
                 "{}{}{}{}{}",
                 cursor::Goto(self.position.x, self.position.y),
                 style::Bold,
-                self.color_lighter_fmt,
+                self.colors.head.get_ansi_string(),
                 char_to_render,
                 style::NoBold
             )
@@ -97,7 +93,7 @@ impl FallingChar {
                         screen,
                         "{}{}{}",
                         cursor::Goto(pos.x, pos.y),
-                        self.color_fmt,
+                        self.colors.trail.get_ansi_string(),
                         char_to_render
                     )
                     .unwrap();

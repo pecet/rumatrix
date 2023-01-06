@@ -4,16 +4,16 @@
 
 use clap::Parser;
 use derive_getters::Getters;
-use dyn_clone::{DynClone};
+use serde::{Serialize, Deserialize};
 use termion::{terminal_size, color};
 use crate::{Position, message::Message};
-#[derive(Getters, Clone)]
+#[derive(Getters, Clone, Serialize, Deserialize)]
 /// Structure holding shared configuration of the program
 pub struct Config {
     /// Current screen size
     screen_size: Position,
     /// Configured [ColorPair] which will be used by the fallers
-    color_pair: Box<dyn ColorPair>,
+    colors: Colors,
     /// Maximum number of fallers
     no_fallers: usize,
     /// [String] which characters will be used for displaying [FallingChar] and its trail
@@ -22,26 +22,87 @@ pub struct Config {
     message: Option<Message>,
 }
 
-impl Config {
-    /// Get color first 8 colors (1-8) from terminal 16 color pallette via number
-    fn get_color(color: i32) -> Box<dyn ColorPair> {
-        match color {
-            2 => Box::new(color::Red),
-            3 => Box::new(color::Green),
-            4 => Box::new(color::Yellow),
-            5 => Box::new(color::Blue),
-            6 => Box::new(color::Magenta),
-            7 => Box::new(color::Cyan),
-            8 => Box::new(color::White),
-            _ => Box::new(color::Black),
+#[derive(Clone, Serialize, Deserialize, Getters)]
+pub struct Colors {
+    pub trail: Color,
+    pub head: Color,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub enum Color {
+    Palette(u8),
+    RGB { r: u8, g: u8, b: u8 },
+}
+
+impl Color {
+    fn rgb_from_vec(rgb: Vec<u8>) -> Color {
+        Color::RGB { r: rgb[0], g: rgb[1], b: rgb[2]}
+    }
+
+    pub fn get_ansi_string(&self) -> String {
+        match self {
+            Color::Palette(color) => {
+                match color {
+                    1 => color::Red.fg_str(),
+                    2 => color::Green.fg_str(),
+                    3 => color::Yellow.fg_str(),
+                    4 => color::Blue.fg_str(),
+                    5 => color::Magenta.fg_str(),
+                    6 => color::Cyan.fg_str(),
+                    7 => color::White.fg_str(),
+                    8 => color::LightBlack.fg_str(),
+                    9 => color::LightRed.fg_str(),
+                    10 => color::LightGreen.fg_str(),
+                    11 => color::LightYellow.fg_str(),
+                    12 => color::LightBlue.fg_str(),
+                    13 => color::LightMagenta.fg_str(),
+                    14 => color::LightCyan.fg_str(),
+                    15 => color::LightWhite.fg_str(),
+                    _ => color::Black.fg_str(),
+                }.to_owned()
+            }
+            Color::RGB { r, g, b } => {
+                color::Rgb(*r, *g, *b).fg_string()
+            }
         }
     }
 
-    /// Get RGB color
-    fn get_rgb_color(r: u8, g: u8, b: u8) -> Box<dyn ColorPair> {
-        Box::new(color::Rgb(r, g, b))
+    fn get_alternate_color(&self) -> Color {
+        match self {
+            Color::Palette(color) => {
+                match color {
+                    0..=7 => Color::Palette(color + 8),
+                    8..=15 => Color::Palette(color - 8),
+                    _ => self.clone(), // this should never happen, but just in case...
+                }
+            }
+            Color::RGB { r, g, b } => {
+                let mut r = *r as u16;
+                let mut g = *g as u16;
+                let mut b = *b as u16;
+                let hardcoded_offset = 15;
+                r += hardcoded_offset;
+                g += hardcoded_offset;
+                b += hardcoded_offset;
+                if r > 255 {
+                    r = 255;
+                }
+                if g > 255 {
+                    g = 255;
+                }
+                if b > 255 {
+                    b = 255;
+                }
+                let r = r as u8;
+                let g = g as u8;
+                let b = b as u8;
+                Color::RGB {r, g, b}
+            }
+        }
     }
+}
 
+impl Config {
     /// Create new [Config] instance with default values
     pub fn new_with_defaults() -> Self {
         Default::default()
@@ -61,25 +122,26 @@ impl Config {
         };
         self.screen_size = size;
 
-        let color = match cli.color {
-            Some(color_str) => match color_str.parse::<i32>() {
-                Ok(color) => Self::get_color(color),
+        let color_trail = match cli.color {
+            Some(color_str) => match color_str.parse::<u8>() {
+                Ok(color) => Color::Palette(color),
                 Err(_) => panic!("Incorrect value for color provided: {}", color_str),
             },
-            None => self.color_pair.clone(), // green
+            None => self.colors.trail.clone(),
         };
-        let color = match cli.color_rgb {
+        let color_trail = match cli.color_rgb {
             Some(color_str) => {
                 let colors_str: Vec<_> = color_str.split(',').collect();
                 if colors_str.len() != 3 {
                     panic!("RGB color needs to be specified using following syntax: r,g,b e.g.: 128,128,255");
                 }
                 let colors_int: Vec<u8> = colors_str.iter().map(|s| s.parse().expect("Cannot convert color value to string")).collect();
-                Self::get_rgb_color(colors_int[0], colors_int[1], colors_int[2])
+                Color::rgb_from_vec(colors_int)
             }
-            None => color,
+            None => color_trail,
         };
-        self.color_pair = color;
+        self.colors.head = color_trail.get_alternate_color();
+        self.colors.trail = color_trail;
 
         let no_fallers = match cli.no_fallers {
             Some(no) => match no {
@@ -118,76 +180,16 @@ impl Default for Config {
         let default_size = terminal_size().expect("Cannot get terminal size!");
         Self {
             screen_size: Position { x: default_size.0, y: default_size.1 },
-            color_pair: Box::new(color::Green),
+            colors: Colors {
+                trail: Color::Palette(2),
+                head: Color::Palette(10),
+            },
             no_fallers: 50,
             chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),
             message: None,
         }
     }
 }
-
-
-/// Trait to return ANSI formatting string for both head and trail color of [FallingChar]
-pub trait ColorPair: DynClone {
-    /// Get ANSI formatting string for head color
-    fn get_color_fmt(&self) -> String;
-    /// Get ANSI formatting string for trail color
-    fn get_color_lighter_fmt(&self) -> String;
-}
-
-dyn_clone::clone_trait_object!(ColorPair);
-
-macro_rules! add_color_pair {
-    ($name: ident, $light_name: ident) => {
-        impl ColorPair for color::$name {
-            fn get_color_fmt(&self) -> String {
-                self.fg_str().to_string()
-            }
-
-            fn get_color_lighter_fmt(&self) -> String {
-                color::$light_name.fg_str().to_string()
-            }
-        }
-    };
-}
-
-add_color_pair!(Black, LightBlack);
-add_color_pair!(Red, LightRed);
-add_color_pair!(Green, LightGreen);
-add_color_pair!(Yellow, LightYellow);
-add_color_pair!(Blue, LightBlue);
-add_color_pair!(Magenta, LightMagenta);
-add_color_pair!(Cyan, LightCyan);
-add_color_pair!(White, LightWhite);
-
-impl ColorPair for color::Rgb {
-    fn get_color_fmt(&self) -> String {
-        self.fg_string()
-    }
-
-    fn get_color_lighter_fmt(&self) -> String {
-        let light_color = (self.0 as u16 + 50, self.1 as u16 + 50, self.2 as u16 + 50);
-        let light_color = (
-            if light_color.0 > 255 {
-                255
-            } else {
-                light_color.0
-            },
-            if light_color.1 > 255 {
-                255
-            } else {
-                light_color.1
-            },
-            if light_color.2 > 255 {
-                255
-            } else {
-                light_color.2
-            }
-        );
-        color::Rgb(light_color.0 as u8, light_color.1 as u8, light_color.2 as u8).fg_string()
-    }
-}
-
 
 
 #[derive(Parser)]
