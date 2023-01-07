@@ -11,7 +11,22 @@ pub struct Position {
 
 impl Position {
     /// Check if `self` position is outside of position defined by `bounds`
+    #[inline]
     pub fn is_out_of_bounds(&self, bounds: &Position) -> bool {
         self.y > bounds.y || self.x > bounds.x
+    }
+
+    /// Returns centered position on screen or [None] if cannot center text
+    #[inline]
+    pub fn new_for_centered_text(bounds: &Position, text: &String) -> Option<Self> {
+        if bounds.x < text.len() as u16 {
+            return None;
+        }
+        Some(
+            Self {
+                x: (bounds.x - text.len() as u16) / 2,
+                y: bounds.y / 2,
+            }
+        )
     }
 }

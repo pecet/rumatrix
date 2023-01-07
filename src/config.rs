@@ -7,6 +7,7 @@ use derive_getters::Getters;
 use serde::{Serialize, Deserialize};
 use termion::{terminal_size};
 use crate::{Position, message::Message, colors::{Colors, Color}};
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 macro_rules! gen_skip_if_default {
     ($field: ident, $type: ty) => {
@@ -108,35 +109,40 @@ impl Config {
         };
         self.chars_to_use = chars_to_use;
 
-        let message = cli.message.clone().map(|message| {
-                if message.len() as u16 > size.x {
-                    panic!("Message size ({}) is bigger than maximum value of screen x coordinate ({})!", message.len(), size.x);
-                }
+        let message = cli.message.clone().map(|message_text| {
                 Message {
-                    position: Position {
-                        x: (size.x - message.len() as u16) / 2,
-                        y: size.y / 2,
-                    },
-                    text: message,
+                    position: Position::new_for_centered_text(&size, &message_text)
+                        .expect("Cannot use entered message text as it is bigger than screen size!"),
+                    text: message_text,
                 }
             }
         );
-        self.message = message;
+        // New message is present use it
+        if message.is_some() {
+            self.message = message;
+        // No new message is present, but screen size could have been overwritten by cli params, need to center it again
+        } else if self.message.is_some() {
+            self.message = self.message.clone().unwrap().clone_centered_or_none(&size)
+        }
+        // Implicit: If message is None, just leave it as is
     }
 }
 
 impl Default for Config {
     fn default() -> Self {
         let default_size = terminal_size().expect("Cannot get terminal size!");
+        let screen_size = Position { x: default_size.0, y: default_size.1 };
+        let message_text = format!("   ruMatrix {}   ", VERSION);
+        let message = Message::new_centered_or_none(&screen_size, message_text);
         Self {
-            screen_size: Position { x: default_size.0, y: default_size.1 },
+            screen_size,
             colors: Colors {
                 trail: Color::Palette(2),
                 head: Color::Palette(10),
             },
             no_fallers: 50,
             chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),
-            message: None,
+            message,
         }
     }
 }
