@@ -28,6 +28,7 @@ macro_rules! gen_skip_if_default {
 }
 
 #[derive(Getters, Clone, Serialize, Deserialize)]
+#[serde(default)]
 /// Structure holding shared configuration of the program
 pub struct Config {
     /// Current screen size
@@ -76,14 +77,14 @@ impl Config {
         self.screen_size = size;
 
         let color_trail = match cli.color {
-            Some(color_str) => match color_str.parse::<u8>() {
+            Some(ref color_str) => match color_str.parse::<u8>() {
                 Ok(color) => Color::Palette(color),
                 Err(_) => panic!("Incorrect value for color provided: {}", color_str),
             },
             None => self.colors.trail.clone(),
         };
         let color_trail = match cli.color_rgb {
-            Some(color_str) => {
+            Some(ref color_str) => {
                 let colors_str: Vec<_> = color_str.split(',').collect();
                 if colors_str.len() != 3 {
                     panic!("RGB color needs to be specified using following syntax: r,g,b e.g.: 128,128,255");
@@ -93,8 +94,15 @@ impl Config {
             }
             None => color_trail,
         };
-        self.colors.head = color_trail.get_alternate_color();
-        self.colors.trail = color_trail;
+        let colors = if cli.color_rgb.is_some() || cli.color.is_some() {
+            Colors {
+                head: color_trail.get_alternate_color(),
+                trail: color_trail,
+            }
+        } else {
+            self.colors.clone()
+        };
+        self.colors = colors;
 
         let no_fallers = match cli.no_fallers {
             Some(no) => match no {
@@ -193,6 +201,10 @@ pub struct Cli {
     /// Print full current configuration as YAML - do include default values
     #[arg(long = "print-full-config")]
     pub print_full_config: bool,
+
+    /// Load config YAML file from path
+    #[arg(long = "config-file", short = 'f')]
+    pub config_file: Option<String>,
 }
 
 

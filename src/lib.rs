@@ -20,6 +20,7 @@ use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
 
 use std::cell::RefCell;
+use std::fs;
 use std::io::Read;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -95,10 +96,17 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
 /// Main function of the program
 pub fn program_main() {
     let mut rng = thread_rng();
-    let mut config = Config::new_with_defaults();
+    let cli = Cli::parse();
+
+    let mut config = match cli.config_file {
+        Some(config_file) => {
+            let config_string = fs::read_to_string(config_file).expect("Cannot read config file, make sure that specified path to it is correct.");
+            serde_yaml::from_str(&config_string).expect("Incorrect config file contents.")
+        }
+        None => Config::new_with_defaults(),
+    };
     config.parse_cli();
 
-    let cli = Cli::parse();
     if cli.print_full_config {
         println!("# Current config YAML, includes:");
         println!("#   Explicit defaults (some values e.g.: screen size might be computed at runtime)");
