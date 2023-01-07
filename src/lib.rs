@@ -1,5 +1,5 @@
-#![warn(missing_docs)]
 //! Library used for ruMatrix
+#![warn(missing_docs)]
 
 /// [FallingChar] module
 pub mod falling_char;
@@ -13,14 +13,19 @@ pub mod faller_adder;
 pub mod message;
 /// [Config] module
 pub mod config;
-use crate::config::Config;
+/// [Colors] and [Color] module
+pub mod colors;
+use crate::config::{Config, Cli};
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
 
 use std::cell::RefCell;
+use std::fs;
 use std::io::Read;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
+use clap::Parser;
 use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
@@ -30,12 +35,15 @@ use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 use termion::{async_stdin, clear, cursor, screen::ToMainScreen, style};
 
-
 use std::{
     io::Bytes,
     io::{self, Write},
     process,
 };
+
+// Easiest way to have this parametrized via cli IMHO
+// TODO: Find better way
+static INCLUDE_DEFAULTS_IN_SERIALIZATION: AtomicBool = AtomicBool::new(false);
 
 /// Handle keyboard input
 pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
@@ -88,8 +96,33 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
 /// Main function of the program
 pub fn program_main() {
     let mut rng = thread_rng();
-    let mut config = Config::new_with_defaults();
+    let cli = Cli::parse();
+
+    let mut config = match cli.config_file {
+        Some(config_file) => {
+            let config_string = fs::read_to_string(config_file).expect("Cannot read config file, make sure that specified path to it is correct.");
+            serde_yaml::from_str(&config_string).expect("Incorrect config file contents.")
+        }
+        None => Config::new_with_defaults(),
+    };
     config.parse_cli();
+
+    if cli.print_full_config {
+        println!("# Current config YAML, includes:");
+        println!("#   Explicit defaults (some values e.g.: screen size might be computed at runtime)");
+        println!("#   Overwritten by settings loaded from config file (if any)");
+        println!("#   Overwritten by settings loaded from command line (if any)");
+        INCLUDE_DEFAULTS_IN_SERIALIZATION.store(true, Ordering::SeqCst);
+        println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
+        process::exit(0);
+    } else if cli.print_config {
+        println!("# Current config YAML, includes:");
+        println!("#   Settings loaded from config file (if any)");
+        println!("#   Overwritten by settings loaded from command line (if any)");
+        INCLUDE_DEFAULTS_IN_SERIALIZATION.store(false, Ordering::SeqCst);
+        println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
+        process::exit(0);
+    }
 
     ctrlc::set_handler(|| {
         clean_exit();

@@ -13,7 +13,7 @@ pub struct FallerAdder<'a> {
     /// [ThreadRng] to use
     pub rng: &'a mut ThreadRng,
     /// [Vec<FallingChar>] holding all instances of [FallingChar]
-    pub falling_chars: Rc<RefCell<Vec<FallingChar>>>,
+    pub falling_chars: Rc<RefCell<Vec<FallingChar<'a>>>>,
     /// Probability to add new falling char on the screen. Value should satisfy `0.0 <= probability <= 1.0` otherwise [ProbabilityOutOfBoundsError] will be generated.
     pub probability_to_add: f64,
     /// Possible x positions of new [FallingChar]s
@@ -45,8 +45,7 @@ impl<'a> FallerAdder<'a> {
                     self.rng,
                     position,
                     *self.config.screen_size(),
-                    self.config.color_pair().get_color_fmt(),
-                    self.config.color_pair().get_color_lighter_fmt(),
+                    self.config.colors(),
                     self.config.chars_to_use(),
                     self.config.message().clone(),
                 ))
