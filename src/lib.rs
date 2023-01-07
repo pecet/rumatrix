@@ -22,6 +22,7 @@ use crate::falling_char::*;
 use std::cell::RefCell;
 use std::io::Read;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use clap::Parser;
 use position::Position;
@@ -33,12 +34,15 @@ use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 use termion::{async_stdin, clear, cursor, screen::ToMainScreen, style};
 
-
 use std::{
     io::Bytes,
     io::{self, Write},
     process,
 };
+
+// Easiest way to have this parametrized via cli IMHO
+// TODO: Find better way
+static INCLUDE_DEFAULTS_IN_SERIALIZATION: AtomicBool = AtomicBool::new(false);
 
 /// Handle keyboard input
 pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
@@ -95,11 +99,19 @@ pub fn program_main() {
     config.parse_cli();
 
     let cli = Cli::parse();
-    if cli.print_config {
+    if cli.print_full_config {
         println!("# Current config YAML, includes:");
-        println!("#   Explicit defaults (some e.g.: screen size might be computed)");
+        println!("#   Explicit defaults (some values e.g.: screen size might be computed at runtime)");
         println!("#   Overwritten by settings loaded from config file (if any)");
         println!("#   Overwritten by settings loaded from command line (if any)");
+        INCLUDE_DEFAULTS_IN_SERIALIZATION.store(true, Ordering::SeqCst);
+        println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
+        process::exit(0);
+    } else if cli.print_config {
+        println!("# Current config YAML, includes:");
+        println!("#   Settings loaded from config file (if any)");
+        println!("#   Overwritten by settings loaded from command line (if any)");
+        INCLUDE_DEFAULTS_IN_SERIALIZATION.store(false, Ordering::SeqCst);
         println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
         process::exit(0);
     }
