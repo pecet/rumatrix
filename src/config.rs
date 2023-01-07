@@ -62,6 +62,8 @@ impl Config {
     /// Parse [Config] from [Cli] (via clap).
     ///
     /// Overwrite defaults with parameters from Cli, or do not if parameter is not present.
+    ///
+    /// TODO: Evaluate and remove unnecessary clones in this method
     pub fn parse_cli(&mut self) {
         let cli = Cli::parse();
 
