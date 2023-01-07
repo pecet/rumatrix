@@ -119,12 +119,15 @@ impl Config {
         );
         // New message is present use it
         if message.is_some() {
-            self.message = message;
+            if message.clone().unwrap().text.is_empty() {
+                self.message = None;
+            } else {
+                self.message = message;
+            }
         // No new message is present, but screen size could have been overwritten by cli params, need to center it again
         } else if self.message.is_some() {
             self.message = self.message.clone().unwrap().clone_centered_or_none(&size)
         }
-        // Implicit: If message is None, just leave it as is
     }
 }
 
