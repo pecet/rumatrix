@@ -3,7 +3,7 @@ use serde::{Serialize, Deserialize};
 use termion::color;
 
 /// Colors used for displaying [FallingChar]
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Colors {
     /// Trail [Color]
     pub trail: Color,
@@ -12,7 +12,7 @@ pub struct Colors {
 }
 
 /// Enum for Color
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub enum Color {
     /// Color from 16-color palette of terminal
     Palette(u8),

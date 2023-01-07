@@ -15,7 +15,7 @@ pub mod message;
 pub mod config;
 /// [Colors] and [Color] module
 pub mod colors;
-use crate::config::Config;
+use crate::config::{Config, Cli};
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
 
@@ -23,6 +23,7 @@ use std::cell::RefCell;
 use std::io::Read;
 use std::rc::Rc;
 
+use clap::Parser;
 use position::Position;
 use rand::prelude::*;
 use random_vec_bag::RandomVecBag;
@@ -92,6 +93,16 @@ pub fn program_main() {
     let mut rng = thread_rng();
     let mut config = Config::new_with_defaults();
     config.parse_cli();
+
+    let cli = Cli::parse();
+    if cli.print_config {
+        println!("# Current config YAML, includes:");
+        println!("#   Explicit defaults (some e.g.: screen size might be computed)");
+        println!("#   Overwritten by settings loaded from config file (if any)");
+        println!("#   Overwritten by settings loaded from command line (if any)");
+        println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
+        process::exit(0);
+    }
 
     ctrlc::set_handler(|| {
         clean_exit();

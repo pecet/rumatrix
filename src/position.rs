@@ -1,7 +1,7 @@
 use serde::{Serialize, Deserialize};
 
 /// Basic structure to hold position on the screen
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct Position {
     /// x coordinate
     pub x: u16,

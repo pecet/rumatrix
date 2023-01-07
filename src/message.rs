@@ -4,7 +4,7 @@ use crate::Position;
 
 /// Struct holds message currently displayed on screen with its:
 /// `position` and `text`
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct Message {
     /// [Position] of message on the screen
     pub position: Position,
