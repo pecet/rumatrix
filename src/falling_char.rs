@@ -63,7 +63,7 @@ impl<'a> FallingChar<'a> {
         !self.previous_positions.iter().all(|&pp| pp.is_out_of_bounds(&self.max_position))
     }
 
-    /// Render charater and its trail on the `screen`
+    /// Render character and its trail on the `screen`
     pub fn render(&self, rng: &mut ThreadRng, screen: &mut AlternateScreen<RawTerminal<Stdout>>) {
         if !self.position.is_out_of_bounds(&self.max_position) {
             let char_to_render: char = self.chars_to_render[0];
@@ -74,7 +74,7 @@ impl<'a> FallingChar<'a> {
                 style::Bold,
                 self.colors.head.get_ansi_string(),
                 char_to_render,
-                style::NoBold
+                style::Reset
             )
             .unwrap();
         }
@@ -91,10 +91,11 @@ impl<'a> FallingChar<'a> {
                     }
                     write!(
                         screen,
-                        "{}{}{}",
+                        "{}{}{}{}",
                         cursor::Goto(pos.x, pos.y),
                         self.colors.trail.get_ansi_string(),
-                        char_to_render
+                        char_to_render,
+                        style::Reset
                     )
                     .unwrap();
                 }
