@@ -79,7 +79,7 @@ impl Config {
         let color_trail = match cli.color {
             Some(ref color_str) => match color_str.parse::<u8>() {
                 Ok(color) => Color::Palette(color),
-                Err(_) => panic!("Incorrect value for color provided: {}", color_str),
+                Err(_) => panic!("Incorrect value for color provided: {color_str}"),
             },
             None => self.colors.trail.clone(),
         };
@@ -145,7 +145,7 @@ impl Default for Config {
     fn default() -> Self {
         let default_size = terminal_size().expect("Cannot get terminal size!");
         let screen_size = Position { x: default_size.0, y: default_size.1 };
-        let message_text = format!("   ruMatrix {}   ", VERSION);
+        let message_text = format!("   ruMatrix {VERSION}   ");
         let message = Message::new_centered_or_none(&screen_size, message_text);
         Self {
             screen_size,
