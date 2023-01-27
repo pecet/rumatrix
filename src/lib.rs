@@ -82,7 +82,7 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
         .into_alternate_screen()
         .unwrap();
 
-    write!(screen, "{}", ToMainScreen).unwrap();
+    write!(screen, "{ToMainScreen}").unwrap();
 
     for f in falling_chars.iter_mut() {
         f.render(&mut thread_rng(), &mut screen);
