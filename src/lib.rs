@@ -93,7 +93,7 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
     screen.flush().unwrap(); // flush alternate screen
     let time_elapsed = SystemTime::now().duration_since(start_time).expect("Cannot get elapsed time").as_millis();
     let time_to_sleep = if time_elapsed < 33 { // 1/30 second ~= 33 ms
-        time_elapsed as u64
+        33 - time_elapsed as u64
     } else {
         1
     };
