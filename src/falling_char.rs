@@ -86,18 +86,24 @@ impl<'a> FallingChar<'a> {
             for (i, pos) in self.previous_positions.iter().enumerate() {
                 if !pos.is_out_of_bounds(&self.max_position) {
                     let mut char_to_render: char = self.chars_to_render[i];
-                    if i == 0 {
+                    if i == self.previous_positions.len() - 1 {
                         char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
-                        if let Some(message) = self.message.clone() {
+                        if let Some(message) = &self.message {
                             char_to_render =
                                 message.get_char_in_position(pos).unwrap_or(char_to_render);
                         }
                     }
+
+                    let color_to_use = if i == self.size as usize - 1 {
+                        self.colors.left_behind.get_ansi_string()
+                    } else {
+                        self.colors.trail.get_ansi_string()
+                    };
                     write!(
                         screen,
                         "{}{}{}{}",
                         cursor::Goto(pos.x, pos.y),
-                        self.colors.trail.get_ansi_string(),
+                        color_to_use,
                         char_to_render,
                         style::Reset
                     )
@@ -110,9 +116,12 @@ impl<'a> FallingChar<'a> {
     /// Advance char position
     pub fn advance(&mut self) {
         if self.previous_positions.len() >= self.size.into() {
-            self.previous_positions.remove(0);
+            let size = self.previous_positions.len();
+            if size > 0 {
+                self.previous_positions.remove(size - 1);
+            }
         }
-        self.previous_positions.push(self.position);
+        self.previous_positions.insert(0, self.position);
         self.position.y += 1;
     }
 }

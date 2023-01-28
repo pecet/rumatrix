@@ -109,7 +109,8 @@ impl Config {
         };
         let colors = if cli.color_rgb.is_some() || cli.color.is_some() {
             Colors {
-                head: color_trail.get_alternate_color(),
+                head: color_trail.get_auto_head_color(),
+                left_behind: color_trail.get_auto_left_behind_color(),
                 trail: color_trail,
             }
         } else {
@@ -163,8 +164,9 @@ impl Default for Config {
         Self {
             screen_size,
             colors: Colors {
-                trail: Color::Palette(2),
-                head: Color::Palette(10),
+                trail: Color::RGB { r: 127, g: 222, b: 90 },
+                head: Color::RGB { r: 100, g: 150, b: 110 },
+                left_behind: Color::RGB { r: 13, g: 89, b: 30 },
             },
             no_fallers: 50,
             chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),

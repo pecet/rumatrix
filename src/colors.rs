@@ -8,6 +8,8 @@ pub struct Colors {
     pub trail: Color,
     /// Head (first char) [Color]
     pub head: Color,
+    /// [Color] of characters left behind
+    pub left_behind: Color,
 }
 
 /// Enum for Color
@@ -28,10 +30,12 @@ pub enum Color {
 
 macro_rules! add_offset_to_u8 {
     ($num: ident, $offset: ident) => {
-        let mut $num = *$num as u16;
+        let mut $num = *$num as i16;
         $num += $offset;
         if $num > 255 {
             $num = 255;
+        } else if $num < 0 {
+            $num = 0;
         }
         let $num = $num as u8;
     };
@@ -75,8 +79,8 @@ impl Color {
         }
     }
 
-    /// Get default alternate color based on `self` color
-    pub fn get_alternate_color(&self) -> Color {
+    /// Get default head color based on `self` color
+    pub fn get_auto_head_color(&self) -> Color {
         match self {
             Color::Palette(color) => {
                 match color {
@@ -86,10 +90,26 @@ impl Color {
                 }
             }
             Color::RGB { r, g, b } => {
-                let hardcoded_offset = 15u16;
-                add_offset_to_u8!(r, hardcoded_offset);
-                add_offset_to_u8!(g, hardcoded_offset);
-                add_offset_to_u8!(b, hardcoded_offset);
+                let color_offset = 15i16;
+
+                add_offset_to_u8!(r, color_offset);
+                add_offset_to_u8!(g, color_offset);
+                add_offset_to_u8!(b, color_offset);
+                Color::RGB { r, g, b }
+            }
+        }
+    }
+
+    /// Get default left behind color based on `self` color
+    pub fn get_auto_left_behind_color(&self) -> Color {
+        match self {
+            Color::Palette(color) => Color::Palette(*color),
+            Color::RGB { r, g, b } => {
+                let color_offset = -30i16;
+
+                add_offset_to_u8!(r, color_offset);
+                add_offset_to_u8!(g, color_offset);
+                add_offset_to_u8!(b, color_offset);
                 Color::RGB { r, g, b }
             }
         }

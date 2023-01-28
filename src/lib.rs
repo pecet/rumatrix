@@ -152,7 +152,7 @@ pub fn program_main() {
     let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(*config.no_fallers())));
     let mut vec: Vec<u16> = Vec::with_capacity(usize::from(config.screen_size().x) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
-    for _ in 1..=3 {
+    for _ in 1..=2 {
         vec.extend(1..=config.screen_size().x);
     }
     let mut position_bag = RandomVecBag::new(vec);
