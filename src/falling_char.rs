@@ -1,4 +1,4 @@
-use crate::{position::*, message::Message, colors::Colors};
+use crate::{colors::Colors, message::Message, position::*};
 use rand::prelude::*;
 use std::{
     cmp::max,
@@ -52,7 +52,7 @@ impl<'a> FallingChar<'a> {
         let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
         // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
         while random_chars.len() < size as usize {
-            let amount_left =  (size as usize) - random_chars.len();
+            let amount_left = (size as usize) - random_chars.len();
             random_chars.extend(chars_to_use.chars().choose_multiple(rng, amount_left));
         }
         random_chars
@@ -60,7 +60,10 @@ impl<'a> FallingChar<'a> {
 
     /// Should this instance of [FallingChar] be retained or cleaned by [FallerAdder]
     pub fn should_be_retained(&self) -> bool {
-        !self.previous_positions.iter().all(|&pp| pp.is_out_of_bounds(&self.max_position))
+        !self
+            .previous_positions
+            .iter()
+            .all(|&pp| pp.is_out_of_bounds(&self.max_position))
     }
 
     /// Render character and its trail on the `screen`
@@ -83,17 +86,24 @@ impl<'a> FallingChar<'a> {
             for (i, pos) in self.previous_positions.iter().enumerate() {
                 if !pos.is_out_of_bounds(&self.max_position) {
                     let mut char_to_render: char = self.chars_to_render[i];
-                    if i == 0 {
+                    if i == self.previous_positions.len() - 1 {
                         char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
-                        if let Some(message) = self.message.clone() {
-                            char_to_render = message.get_char_in_position(pos).unwrap_or(char_to_render);
+                        if let Some(message) = &self.message {
+                            char_to_render =
+                                message.get_char_in_position(pos).unwrap_or(char_to_render);
                         }
                     }
+
+                    let color_to_use = if i == self.size as usize - 1 {
+                        self.colors.left_behind.get_ansi_string()
+                    } else {
+                        self.colors.trail.get_ansi_string()
+                    };
                     write!(
                         screen,
                         "{}{}{}{}",
                         cursor::Goto(pos.x, pos.y),
-                        self.colors.trail.get_ansi_string(),
+                        color_to_use,
                         char_to_render,
                         style::Reset
                     )
@@ -106,9 +116,12 @@ impl<'a> FallingChar<'a> {
     /// Advance char position
     pub fn advance(&mut self) {
         if self.previous_positions.len() >= self.size.into() {
-            self.previous_positions.remove(0);
+            let size = self.previous_positions.len();
+            if size > 0 {
+                self.previous_positions.remove(size - 1);
+            }
         }
-        self.previous_positions.push(self.position);
+        self.previous_positions.insert(0, self.position);
         self.position.y += 1;
     }
 }

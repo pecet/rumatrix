@@ -1,21 +1,21 @@
 //! Library used for ruMatrix
 #![warn(missing_docs)]
 
+/// [Colors] and [Color] module
+pub mod colors;
+/// [Config] module
+pub mod config;
+/// [FallerAdder] module
+pub mod faller_adder;
 /// [FallingChar] module
 pub mod falling_char;
+/// [Message] module
+pub mod message;
 /// [Position] module
 pub mod position;
 /// [RandomVecBag] module
 pub mod random_vec_bag;
-/// [FallerAdder] module
-pub mod faller_adder;
-/// [Message] module
-pub mod message;
-/// [Config] module
-pub mod config;
-/// [Colors] and [Color] module
-pub mod colors;
-use crate::config::{Config, Cli};
+use crate::config::{Cli, Config};
 use crate::faller_adder::FallerAdder;
 use crate::falling_char::*;
 
@@ -53,11 +53,7 @@ pub fn handle_keys(stdin: &mut Bytes<AsyncReader>) {
         clean_exit();
     }
     if let Some(Ok(b'c')) = key_char {
-        print!(
-            "{}{}",
-            style::Reset,
-            clear::All
-        )
+        print!("{}{}", style::Reset, clear::All)
     }
 }
 
@@ -91,8 +87,12 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
         f.advance();
     }
     screen.flush().unwrap(); // flush alternate screen
-    let time_elapsed = SystemTime::now().duration_since(start_time).expect("Cannot get elapsed time").as_millis();
-    let time_to_sleep = if time_elapsed < 33 { // 1/30 second ~= 33 ms
+    let time_elapsed = SystemTime::now()
+        .duration_since(start_time)
+        .expect("Cannot get elapsed time")
+        .as_millis();
+    let time_to_sleep = if time_elapsed < 33 {
+        // 1/30 second ~= 33 ms
         33 - time_elapsed as u64
     } else {
         1
@@ -108,7 +108,8 @@ pub fn program_main() {
 
     let mut config = match cli.config_file {
         Some(config_file) => {
-            let config_string = fs::read_to_string(config_file).expect("Cannot read config file, make sure that specified path to it is correct.");
+            let config_string = fs::read_to_string(config_file)
+                .expect("Cannot read config file, make sure that specified path to it is correct.");
             serde_yaml::from_str(&config_string).expect("Incorrect config file contents.")
         }
         None => Config::new_with_defaults(),
@@ -117,18 +118,26 @@ pub fn program_main() {
 
     if cli.print_full_config {
         println!("# Current config YAML, includes:");
-        println!("#   Explicit defaults (some values e.g.: screen size might be computed at runtime)");
+        println!(
+            "#   Explicit defaults (some values e.g.: screen size might be computed at runtime)"
+        );
         println!("#   Overwritten by settings loaded from config file (if any)");
         println!("#   Overwritten by settings loaded from command line (if any)");
         INCLUDE_DEFAULTS_IN_SERIALIZATION.store(true, Ordering::SeqCst);
-        println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
+        println!(
+            "{}",
+            serde_yaml::to_string(&config).expect("Cannot serialize current config!")
+        );
         process::exit(0);
     } else if cli.print_config {
         println!("# Current config YAML, includes:");
         println!("#   Settings loaded from config file (if any)");
         println!("#   Overwritten by settings loaded from command line (if any)");
         INCLUDE_DEFAULTS_IN_SERIALIZATION.store(false, Ordering::SeqCst);
-        println!("{}", serde_yaml::to_string(&config).expect("Cannot serialize current config!"));
+        println!(
+            "{}",
+            serde_yaml::to_string(&config).expect("Cannot serialize current config!")
+        );
         process::exit(0);
     }
 
@@ -143,7 +152,7 @@ pub fn program_main() {
     let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(*config.no_fallers())));
     let mut vec: Vec<u16> = Vec::with_capacity(usize::from(config.screen_size().x) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
-    for _ in 1..=3 {
+    for _ in 1..=2 {
         vec.extend(1..=config.screen_size().x);
     }
     let mut position_bag = RandomVecBag::new(vec);
@@ -162,6 +171,8 @@ pub fn program_main() {
         handle_keys(&mut stdin);
         main_loop(falling_char_ref2);
         handle_keys(&mut stdin);
-        faller_adder.add_and_retire().expect("Cannot add/or retire fallers");
+        faller_adder
+            .add_and_retire()
+            .expect("Cannot add/or retire fallers");
     }
 }

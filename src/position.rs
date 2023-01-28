@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Basic structure to hold position on the screen
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -22,11 +22,9 @@ impl Position {
         if bounds.x < text.len() as u16 {
             return None;
         }
-        Some(
-            Self {
-                x: (bounds.x - text.len() as u16) / 2,
-                y: bounds.y / 2,
-            }
-        )
+        Some(Self {
+            x: (bounds.x - text.len() as u16) / 2,
+            y: bounds.y / 2,
+        })
     }
 }
