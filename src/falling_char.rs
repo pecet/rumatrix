@@ -1,4 +1,4 @@
-use crate::{position::*, message::Message, colors::Colors};
+use crate::{colors::Colors, message::Message, position::*};
 use rand::prelude::*;
 use std::{
     cmp::max,
@@ -52,7 +52,7 @@ impl<'a> FallingChar<'a> {
         let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
         // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
         while random_chars.len() < size as usize {
-            let amount_left =  (size as usize) - random_chars.len();
+            let amount_left = (size as usize) - random_chars.len();
             random_chars.extend(chars_to_use.chars().choose_multiple(rng, amount_left));
         }
         random_chars
@@ -60,7 +60,10 @@ impl<'a> FallingChar<'a> {
 
     /// Should this instance of [FallingChar] be retained or cleaned by [FallerAdder]
     pub fn should_be_retained(&self) -> bool {
-        !self.previous_positions.iter().all(|&pp| pp.is_out_of_bounds(&self.max_position))
+        !self
+            .previous_positions
+            .iter()
+            .all(|&pp| pp.is_out_of_bounds(&self.max_position))
     }
 
     /// Render character and its trail on the `screen`
@@ -86,7 +89,8 @@ impl<'a> FallingChar<'a> {
                     if i == 0 {
                         char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
                         if let Some(message) = self.message.clone() {
-                            char_to_render = message.get_char_in_position(pos).unwrap_or(char_to_render);
+                            char_to_render =
+                                message.get_char_in_position(pos).unwrap_or(char_to_render);
                         }
                     }
                     write!(

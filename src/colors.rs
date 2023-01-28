@@ -1,5 +1,4 @@
-
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use termion::color;
 
 /// Colors used for displaying [FallingChar]
@@ -35,7 +34,7 @@ macro_rules! add_offset_to_u8 {
             $num = 255;
         }
         let $num = $num as u8;
-    }
+    };
 }
 
 impl Color {
@@ -43,35 +42,36 @@ impl Color {
     ///
     /// This does NOT check if vector has at least 3 values, so might result in panic while accessing elements
     pub fn rgb_from_vec(rgb: Vec<u8>) -> Color {
-        Color::RGB { r: rgb[0], g: rgb[1], b: rgb[2] }
+        Color::RGB {
+            r: rgb[0],
+            g: rgb[1],
+            b: rgb[2],
+        }
     }
 
     /// Get ANSI string for [Color]
     pub fn get_ansi_string(&self) -> String {
         match self {
-            Color::Palette(color) => {
-                match color {
-                    1 => color::Red.fg_str(),
-                    2 => color::Green.fg_str(),
-                    3 => color::Yellow.fg_str(),
-                    4 => color::Blue.fg_str(),
-                    5 => color::Magenta.fg_str(),
-                    6 => color::Cyan.fg_str(),
-                    7 => color::White.fg_str(),
-                    8 => color::LightBlack.fg_str(),
-                    9 => color::LightRed.fg_str(),
-                    10 => color::LightGreen.fg_str(),
-                    11 => color::LightYellow.fg_str(),
-                    12 => color::LightBlue.fg_str(),
-                    13 => color::LightMagenta.fg_str(),
-                    14 => color::LightCyan.fg_str(),
-                    15 => color::LightWhite.fg_str(),
-                    _ => color::Black.fg_str(),
-                }.to_owned()
+            Color::Palette(color) => match color {
+                1 => color::Red.fg_str(),
+                2 => color::Green.fg_str(),
+                3 => color::Yellow.fg_str(),
+                4 => color::Blue.fg_str(),
+                5 => color::Magenta.fg_str(),
+                6 => color::Cyan.fg_str(),
+                7 => color::White.fg_str(),
+                8 => color::LightBlack.fg_str(),
+                9 => color::LightRed.fg_str(),
+                10 => color::LightGreen.fg_str(),
+                11 => color::LightYellow.fg_str(),
+                12 => color::LightBlue.fg_str(),
+                13 => color::LightMagenta.fg_str(),
+                14 => color::LightCyan.fg_str(),
+                15 => color::LightWhite.fg_str(),
+                _ => color::Black.fg_str(),
             }
-            Color::RGB { r, g, b } => {
-                color::Rgb(*r, *g, *b).fg_string()
-            }
+            .to_owned(),
+            Color::RGB { r, g, b } => color::Rgb(*r, *g, *b).fg_string(),
         }
     }
 
@@ -90,7 +90,7 @@ impl Color {
                 add_offset_to_u8!(r, hardcoded_offset);
                 add_offset_to_u8!(g, hardcoded_offset);
                 add_offset_to_u8!(b, hardcoded_offset);
-                Color::RGB {r, g, b}
+                Color::RGB { r, g, b }
             }
         }
     }

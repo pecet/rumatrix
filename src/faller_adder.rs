@@ -1,8 +1,9 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{cell::RefCell, rc::Rc};
 
+use crate::{
+    config::Config, falling_char::FallingChar, position::Position, random_vec_bag::RandomVecBag,
+};
 use rand::prelude::*;
-use crate::{random_vec_bag::RandomVecBag, falling_char::{FallingChar}, position::Position, config::Config};
-
 
 /// Error thrown if `probabilty_to_add` in [FallerAdder] is not `0.0 <= probability <= 1.0`
 #[derive(Debug)]
@@ -36,7 +37,8 @@ impl<'a> FallerAdder<'a> {
         for _ in falling_chars.len()..*self.config.no_fallers() {
             if self.rng.gen_bool(self.probability_to_add) {
                 let position = Position {
-                    x: *self.positions
+                    x: *self
+                        .positions
                         .get()
                         .expect("Cannot get random position from bag"),
                     y: 1,

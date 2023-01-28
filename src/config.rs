@@ -2,11 +2,15 @@
 // only because derive(Getters) give me error about functions derived by it do not have docs
 // most likely there is better way to do this
 
+use crate::{
+    colors::{Color, Colors},
+    message::Message,
+    Position,
+};
 use clap::Parser;
 use derive_getters::Getters;
-use serde::{Serialize, Deserialize};
-use termion::{terminal_size};
-use crate::{Position, message::Message, colors::{Colors, Color}};
+use serde::{Deserialize, Serialize};
+use termion::terminal_size;
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 macro_rules! gen_skip_if_default {
@@ -70,8 +74,14 @@ impl Config {
 
         let size = match (cli.size_x, cli.size_y) {
             (Some(x), Some(y)) => Position { x, y },
-            (Some(x), None) => Position { x, ..self.screen_size },
-            (None, Some(y)) => Position { y, ..self.screen_size },
+            (Some(x), None) => Position {
+                x,
+                ..self.screen_size
+            },
+            (None, Some(y)) => Position {
+                y,
+                ..self.screen_size
+            },
             _ => self.screen_size,
         };
         self.screen_size = size;
@@ -89,7 +99,10 @@ impl Config {
                 if colors_str.len() != 3 {
                     panic!("RGB color needs to be specified using following syntax: r,g,b e.g.: 128,128,255");
                 }
-                let colors_int: Vec<u8> = colors_str.iter().map(|s| s.parse().expect("Cannot convert color value to string")).collect();
+                let colors_int: Vec<u8> = colors_str
+                    .iter()
+                    .map(|s| s.parse().expect("Cannot convert color value to string"))
+                    .collect();
                 Color::rgb_from_vec(colors_int)
             }
             None => color_trail,
@@ -119,14 +132,11 @@ impl Config {
         };
         self.chars_to_use = chars_to_use;
 
-        let message = cli.message.clone().map(|message_text| {
-                Message {
-                    position: Position::new_for_centered_text(&size, &message_text)
-                        .expect("Cannot use entered message text as it is bigger than screen size!"),
-                    text: message_text,
-                }
-            }
-        );
+        let message = cli.message.clone().map(|message_text| Message {
+            position: Position::new_for_centered_text(&size, &message_text)
+                .expect("Cannot use entered message text as it is bigger than screen size!"),
+            text: message_text,
+        });
         // New message is present use it
         if message.is_some() {
             if message.clone().unwrap().text.is_empty() {
@@ -144,7 +154,10 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         let default_size = terminal_size().expect("Cannot get terminal size!");
-        let screen_size = Position { x: default_size.0, y: default_size.1 };
+        let screen_size = Position {
+            x: default_size.0,
+            y: default_size.1,
+        };
         let message_text = format!("   ruMatrix {VERSION}   ");
         let message = Message::new_centered_or_none(&screen_size, message_text);
         Self {
@@ -206,5 +219,3 @@ pub struct Cli {
     #[arg(long = "config-file", short = 'f')]
     pub config_file: Option<String>,
 }
-
-

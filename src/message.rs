@@ -1,4 +1,4 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 use crate::Position;
 
@@ -9,19 +9,14 @@ pub struct Message {
     /// [Position] of message on the screen
     pub position: Position,
     /// Text of the message
-    pub text: String
+    pub text: String,
 }
 
 impl Message {
     /// Returns centered message wrapped in [Some] or [None] if not possible to center
     pub fn new_centered_or_none(bounds: &Position, text: String) -> Option<Self> {
         let position = Position::new_for_centered_text(bounds, &text);
-        position.map(|position| {
-            Self {
-                position,
-                text,
-            }
-        })
+        position.map(|position| Self { position, text })
     }
 
     /// Returns clone of message re-centered to new `bounds` wrapped in [Some] or [None] if not possible to re-center
@@ -31,9 +26,9 @@ impl Message {
 
     /// Check if `other_position` is inside of message's `position`
     fn is_position_inside_message(&self, other_position: &Position) -> bool {
-        other_position.y == self.position.y &&
-        other_position.x >= self.position.x &&
-        other_position.x < self.position.x + self.text.len() as u16
+        other_position.y == self.position.y
+            && other_position.x >= self.position.x
+            && other_position.x < self.position.x + self.text.len() as u16
     }
 
     /// Get [char], use it only if `is_position_inside_message` is true.
