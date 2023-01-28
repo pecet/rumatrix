@@ -24,6 +24,7 @@ use std::fs;
 use std::io::Read;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::SystemTime;
 
 use clap::Parser;
 use position::Position;
@@ -75,6 +76,7 @@ pub fn clean_exit() {
 
 /// Main loop of the program
 pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
+    let start_time = SystemTime::now();
     let mut falling_chars = falling_chars.borrow_mut();
     let mut screen = io::stdout()
         .into_raw_mode()
@@ -89,8 +91,14 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
         f.advance();
     }
     screen.flush().unwrap(); // flush alternate screen
+    let time_elapsed = SystemTime::now().duration_since(start_time).expect("Cannot get elapsed time").as_millis();
+    let time_to_sleep = if time_elapsed < 33 { // 1/30 second ~= 33 ms
+        time_elapsed as u64
+    } else {
+        1
+    };
     drop(screen); // copy alternate screen to main screen
-    std::thread::sleep(std::time::Duration::from_millis(2));
+    std::thread::sleep(std::time::Duration::from_millis(time_to_sleep));
 }
 
 /// Main function of the program
