@@ -85,20 +85,22 @@ impl<'a> FallingChar<'a> {
         if !self.previous_positions.is_empty() {
             for (i, pos) in self.previous_positions.iter().enumerate() {
                 if !pos.is_out_of_bounds(&self.max_position) {
-                    let mut char_to_render: char = self.chars_to_render[i];
+                    let mut char_to_render = self.chars_to_render[i];
+                    let mut color_to_use = self.colors.trail.get_ansi_string();
+                    if i == self.size as usize - 1 {
+                        color_to_use = self.colors.left_behind.get_ansi_string()
+                    };
                     if i == self.previous_positions.len() - 1 {
                         char_to_render = self.chars_to_render.choose(rng).unwrap().to_owned();
                         if let Some(message) = &self.message {
                             char_to_render =
                                 message.get_char_in_position(pos).unwrap_or(char_to_render);
+                            if message.is_position_inside_message(pos) {
+                                color_to_use = message.color.get_ansi_string();
+                            }
                         }
                     }
 
-                    let color_to_use = if i == self.size as usize - 1 {
-                        self.colors.left_behind.get_ansi_string()
-                    } else {
-                        self.colors.trail.get_ansi_string()
-                    };
                     write!(
                         screen,
                         "{}{}{}{}",

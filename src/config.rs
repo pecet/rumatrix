@@ -111,7 +111,7 @@ impl Config {
             Colors {
                 head: color_trail.get_auto_head_color(),
                 left_behind: color_trail.get_auto_left_behind_color(),
-                trail: color_trail,
+                trail: color_trail.clone(),
             }
         } else {
             self.colors.clone()
@@ -137,6 +137,7 @@ impl Config {
             position: Position::new_for_centered_text(&size, &message_text)
                 .expect("Cannot use entered message text as it is bigger than screen size!"),
             text: message_text,
+            color: color_trail.clone(),
         });
         // New message is present use it
         if message.is_some() {
@@ -160,7 +161,15 @@ impl Default for Config {
             y: default_size.1,
         };
         let message_text = format!("   ruMatrix {VERSION}   ");
-        let message = Message::new_centered_or_none(&screen_size, message_text);
+        let message = Message::new_centered_or_none(
+            &screen_size,
+            message_text,
+            Color::RGB {
+                r: 41,
+                g: 194,
+                b: 148,
+            },
+        );
         Self {
             screen_size,
             colors: Colors {
@@ -169,7 +178,7 @@ impl Default for Config {
                 left_behind: Color::RGB { r: 13, g: 89, b: 30 },
             },
             no_fallers: 50,
-            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),
+            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@#$%^&*()-_+|{}[]<>?!~\\/.,:;".into(),
             message,
         }
     }
