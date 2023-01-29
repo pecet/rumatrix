@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::message::TextType;
+
 /// Basic structure to hold position on the screen
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Position {
@@ -18,12 +20,12 @@ impl Position {
 
     /// Returns centered position on screen or [None] if cannot center text
     #[inline]
-    pub fn new_for_centered_text(bounds: &Position, text: &String) -> Option<Self> {
-        if bounds.x < text.len() as u16 {
+    pub fn new_for_centered_text(bounds: &Position, text: &TextType) -> Option<Self> {
+        if bounds.x < text.to_string().len() as u16 {
             return None;
         }
         Some(Self {
-            x: (bounds.x - text.len() as u16) / 2,
+            x: (bounds.x - text.to_string().len() as u16) / 2,
             y: bounds.y / 2,
         })
     }

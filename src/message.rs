@@ -9,14 +9,14 @@ pub struct Message {
     /// [Position] of message on the screen
     pub position: Position,
     /// Text of the message
-    pub text: String,
+    pub text: TextType,
     /// [Color] of message
     pub color: Color,
 }
 
 impl Message {
     /// Returns centered message wrapped in [Some] or [None] if not possible to center
-    pub fn new_centered_or_none(bounds: &Position, text: String, color: Color) -> Option<Self> {
+    pub fn new_centered_or_none(bounds: &Position, text: TextType, color: Color) -> Option<Self> {
         let position = Position::new_for_centered_text(bounds, &text);
         position.map(|position| Self {
             position,
@@ -34,14 +34,14 @@ impl Message {
     pub fn is_position_inside_message(&self, other_position: &Position) -> bool {
         other_position.y == self.position.y
             && other_position.x >= self.position.x
-            && other_position.x < self.position.x + self.text.len() as u16
+            && other_position.x < self.position.x + self.text.to_string().len() as u16
     }
 
     /// Get [char], use it only if `is_position_inside_message` is true.
     /// Otherwise it might panic when calculating [char] to get
     fn get_message_char(&self, other_position: &Position) -> char {
         let nth = (other_position.x - self.position.x) as usize;
-        self.text.chars().nth(nth).unwrap()
+        self.text.to_string().chars().nth(nth).unwrap()
     }
 
     /// Check if `other_position` is inside of message's `position`
@@ -54,6 +54,22 @@ impl Message {
             Some(self.get_message_char(other_position))
         } else {
             None
+        }
+    }
+}
+
+/// [TextType] of text to display on the screen.
+#[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum TextType {
+    StaticString(String),
+    CurrentDateTime(String),
+}
+
+impl ToString for TextType {
+    fn to_string(&self) -> String {
+        return match self {
+            TextType::StaticString(ref text) => text.clone(),
+            TextType::CurrentDateTime(ref format) => "TO DO".to_owned(),
         }
     }
 }

@@ -4,7 +4,7 @@
 
 use crate::{
     colors::{Color, Colors},
-    message::Message,
+    message::{Message, TextType},
     Position,
 };
 use clap::Parser;
@@ -134,14 +134,14 @@ impl Config {
         self.chars_to_use = chars_to_use;
 
         let message = cli.message.clone().map(|message_text| Message {
-            position: Position::new_for_centered_text(&size, &message_text)
+            position: Position::new_for_centered_text(&size, &TextType::StaticString(message_text.clone()))
                 .expect("Cannot use entered message text as it is bigger than screen size!"),
-            text: message_text,
+            text: TextType::StaticString(message_text),
             color: color_trail.clone(),
         });
         // New message is present use it
         if message.is_some() {
-            if message.clone().unwrap().text.is_empty() {
+            if message.clone().unwrap().text.to_string().is_empty() {
                 self.message = None;
             } else {
                 self.message = message;
@@ -160,16 +160,8 @@ impl Default for Config {
             x: default_size.0,
             y: default_size.1,
         };
-        let message_text = format!("   ruMatrix {VERSION}   ");
-        let message = Message::new_centered_or_none(
-            &screen_size,
-            message_text,
-            Color::RGB {
-                r: 41,
-                g: 194,
-                b: 148,
-            },
-        );
+        let message_text = TextType::StaticString(format!("   ruMatrix {VERSION}   "));
+        let message = Message::new_centered_or_none(&screen_size, message_text, Color::RGB{r: 41, g: 194, b: 148});
         Self {
             screen_size,
             colors: Colors {
@@ -178,7 +170,7 @@ impl Default for Config {
                 left_behind: Color::RGB { r: 13, g: 89, b: 30 },
             },
             no_fallers: 50,
-            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@#$%^&*()-_+|{}[]<>?!~\\/.,:;".into(),
+            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),
             message,
         }
     }
