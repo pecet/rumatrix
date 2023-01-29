@@ -11,6 +11,8 @@ use clap::Parser;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 use termion::terminal_size;
+use crate::position::{CenteredPosition, PositionTrait, PositionType};
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 macro_rules! gen_skip_if_default {
@@ -59,11 +61,6 @@ gen_skip_if_default!(chars_to_use, String);
 gen_skip_if_default!(message, Option<Message>);
 
 impl Config {
-    /// Create new [Config] instance with default values
-    pub fn new_with_defaults() -> Self {
-        Default::default()
-    }
-
     /// Parse [Config] from [Cli] (via clap).
     ///
     /// Overwrite defaults with parameters from Cli, or do not if parameter is not present.
@@ -73,15 +70,9 @@ impl Config {
         let cli = Cli::parse();
 
         let size = match (cli.size_x, cli.size_y) {
-            (Some(x), Some(y)) => Position { x, y },
-            (Some(x), None) => Position {
-                x,
-                ..self.screen_size
-            },
-            (None, Some(y)) => Position {
-                y,
-                ..self.screen_size
-            },
+            (Some(x), Some(y)) => Position::new(x, y),
+            (Some(x), None) => Position::new(x, self.screen_size.y()),
+            (None, Some(y)) => Position::new(self.screen_size.x(), y),
             _ => self.screen_size,
         };
         self.screen_size = size;
@@ -134,13 +125,10 @@ impl Config {
         self.chars_to_use = chars_to_use;
 
         let message = cli.message.clone().map(|message_text| Message {
-            position: Position::new_for_centered_text(
-                &size,
-                &TextType::StaticString(message_text.clone()),
-            )
-            .expect("Cannot use entered message text as it is bigger than screen size!"),
+            position: PositionType::Center(CenteredPosition::new(&size, &TextType::StaticString(message_text.clone()))),
             text: TextType::StaticString(message_text),
             color: color_trail.clone(),
+            bounds: size.clone(),
         });
         // New message is present use it
         if message.is_some() {
@@ -151,7 +139,7 @@ impl Config {
             }
         // No new message is present, but screen size could have been overwritten by cli params, need to center it again
         } else if self.message.is_some() {
-            self.message = self.message.clone().unwrap().clone_centered_or_none(&size)
+            self.message = self.message.clone();
         }
     }
 }
@@ -159,13 +147,10 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         let default_size = terminal_size().expect("Cannot get terminal size!");
-        let screen_size = Position {
-            x: default_size.0,
-            y: default_size.1,
-        };
+        let screen_size = Position::new(default_size.0, default_size.1);
         let message_text = TextType::StaticString(format!("   ruMatrix {VERSION}   "));
         let message = Message::new_centered_or_none(
-            &screen_size,
+            screen_size,
             message_text,
             Color::RGB {
                 r: 41,

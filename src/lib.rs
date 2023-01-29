@@ -41,6 +41,7 @@ use std::{
     io::{self, Write},
     process,
 };
+use crate::position::PositionTrait;
 
 // Easiest way to have this parametrized via cli IMHO
 // TODO: Find better way
@@ -112,7 +113,7 @@ pub fn program_main() {
                 .expect("Cannot read config file, make sure that specified path to it is correct.");
             serde_yaml::from_str(&config_string).expect("Incorrect config file contents.")
         }
-        None => Config::new_with_defaults(),
+        None => Config::default(),
     };
     config.parse_cli();
 
@@ -150,10 +151,10 @@ pub fn program_main() {
     io::stdout().flush().unwrap();
 
     let falling_chars = Rc::new(RefCell::new(Vec::with_capacity(*config.no_fallers())));
-    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(config.screen_size().x) * 3);
+    let mut vec: Vec<u16> = Vec::with_capacity(usize::from(config.screen_size().x()) * 3);
     // we want unique positions for fallers, but it still looks cool if some fallers fall at the same time at the same position
     for _ in 1..=2 {
-        vec.extend(1..=config.screen_size().x);
+        vec.extend(1..=config.screen_size().x());
     }
     let mut position_bag = RandomVecBag::new(vec);
     let mut stdin = async_stdin().bytes();

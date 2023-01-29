@@ -35,7 +35,7 @@ impl<'a> FallingChar<'a> {
         chars_to_use: &str,
         message: Option<Message>,
     ) -> Self {
-        let size = rng.gen_range(max(1, max_position.y / 3)..=max_position.y);
+        let size = rng.gen_range(max(1, max_position.y() / 3)..=max_position.y());
         Self {
             position,
             previous_positions: Vec::with_capacity(size as usize + 1usize),
@@ -73,7 +73,7 @@ impl<'a> FallingChar<'a> {
             write!(
                 screen,
                 "{}{}{}{}{}",
-                cursor::Goto(self.position.x, self.position.y),
+                cursor::Goto(self.position.x(), self.position.y()),
                 style::Bold,
                 self.colors.head.get_ansi_string(),
                 char_to_render,
@@ -104,7 +104,7 @@ impl<'a> FallingChar<'a> {
                     write!(
                         screen,
                         "{}{}{}{}",
-                        cursor::Goto(pos.x, pos.y),
+                        cursor::Goto(pos.x(), pos.y()),
                         color_to_use,
                         char_to_render,
                         style::Reset
@@ -124,6 +124,10 @@ impl<'a> FallingChar<'a> {
             }
         }
         self.previous_positions.insert(0, self.position);
-        self.position.y += 1;
+        self.position.set_y(self.position.y() + 1);
+        match self.message {
+            Some(ref mut message) => { message.update_position() }
+            _ => {}
+        }
     }
 }

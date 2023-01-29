@@ -11,13 +11,15 @@ colors:
     r: 13
     g: 89
     b: 30
-no_fallers: 75
+no_fallers: 50
+chars_to_use: abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\/.,:;
 message:
-  position:
-    x: 57
-    y: 20
+  position: !Center
+  bounds:
+    x: 135
+    y: 37
   text: !CurrentDateTime ' %d %B %Y - %H:%M ' # seconds are not updated fast enough to be useful
   color: !RGB
-    r: 255
+    r: 41
     g: 194
     b: 148
