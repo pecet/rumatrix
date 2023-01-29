@@ -1,3 +1,4 @@
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 
 use crate::{colors::Color, Position};
@@ -61,15 +62,21 @@ impl Message {
 /// [TextType] of text to display on the screen.
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TextType {
+    // Basic static string
     StaticString(String),
+    // Current Date and/or Time with formatting string
     CurrentDateTime(String),
 }
 
 impl ToString for TextType {
     fn to_string(&self) -> String {
-        return match self {
+        match self {
             TextType::StaticString(ref text) => text.clone(),
-            TextType::CurrentDateTime(ref format) => "TO DO".to_owned(),
+            TextType::CurrentDateTime(ref format) => {
+                let date = Local::now();
+                let format = date.format(format);
+                format!("{format}")
+            }
         }
     }
 }

@@ -134,8 +134,11 @@ impl Config {
         self.chars_to_use = chars_to_use;
 
         let message = cli.message.clone().map(|message_text| Message {
-            position: Position::new_for_centered_text(&size, &TextType::StaticString(message_text.clone()))
-                .expect("Cannot use entered message text as it is bigger than screen size!"),
+            position: Position::new_for_centered_text(
+                &size,
+                &TextType::StaticString(message_text.clone()),
+            )
+            .expect("Cannot use entered message text as it is bigger than screen size!"),
             text: TextType::StaticString(message_text),
             color: color_trail.clone(),
         });
@@ -161,7 +164,15 @@ impl Default for Config {
             y: default_size.1,
         };
         let message_text = TextType::StaticString(format!("   ruMatrix {VERSION}   "));
-        let message = Message::new_centered_or_none(&screen_size, message_text, Color::RGB{r: 41, g: 194, b: 148});
+        let message = Message::new_centered_or_none(
+            &screen_size,
+            message_text,
+            Color::RGB {
+                r: 41,
+                g: 194,
+                b: 148,
+            },
+        );
         Self {
             screen_size,
             colors: Colors {
@@ -209,6 +220,11 @@ pub struct Cli {
     /// Message to show on the screen (default: no message)
     #[arg(long = "msg", short = 'm')]
     message: Option<String>,
+
+    /// Show current date and or time on the screen using date formatting string
+    /// This will overwrite --msg
+    #[arg(long = "date", short = 'd')]
+    date_format: Option<String>,
 
     /// Print current configuration as YAML - do not include default values
     #[arg(long = "print-config")]

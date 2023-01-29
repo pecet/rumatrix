@@ -1,0 +1,23 @@
+colors:
+  trail: !RGB
+    r: 127
+    g: 222
+    b: 90
+  head: !RGB
+    r: 100
+    g: 150
+    b: 110
+  left_behind: !RGB
+    r: 13
+    g: 89
+    b: 30
+no_fallers: 75
+message:
+  position:
+    x: 57
+    y: 20
+  text: !CurrentDateTime ' %d %B %Y - %H:%M ' # seconds are not updated fast enough to be useful
+  color: !RGB
+    r: 255
+    g: 194
+    b: 148
