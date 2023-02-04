@@ -58,6 +58,7 @@ impl Message {
         }
     }
 
+    /// Update [PositionType] inside of [Message]
     pub fn update_position(&mut self) {
         self.position.update(&self.bounds, &self.text)
     }
@@ -66,9 +67,9 @@ impl Message {
 /// [TextType] of text to display on the screen.
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum TextType {
-    // Basic static string
+    /// Basic static string
     StaticString(String),
-    // Current Date and/or Time with formatting string
+    /// Current Date and/or Time with formatting string
     CurrentDateTime(String),
 }
 

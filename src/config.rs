@@ -128,7 +128,7 @@ impl Config {
             position: PositionType::Center(CenteredPosition::new(&size, &TextType::StaticString(message_text.clone()))),
             text: TextType::StaticString(message_text),
             color: color_trail.clone(),
-            bounds: size.clone(),
+            bounds: size,
         });
         // New message is present use it
         if message.is_some() {

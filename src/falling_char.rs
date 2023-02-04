@@ -125,9 +125,6 @@ impl<'a> FallingChar<'a> {
         }
         self.previous_positions.insert(0, self.position);
         self.position.set_y(self.position.y() + 1);
-        match self.message {
-            Some(ref mut message) => { message.update_position() }
-            _ => {}
-        }
+        if let Some(ref mut message) = self.message { message.update_position() }
     }
 }

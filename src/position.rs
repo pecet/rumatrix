@@ -2,22 +2,29 @@ use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
 use crate::message::TextType;
 
+/// Trait definies basic methods for all position types. See also [PositionType]
 #[enum_dispatch]
 pub trait PositionTrait {
+    /// Get x value
     fn x(&self) -> u16;
+    /// Get y value
     fn y(&self) -> u16;
+    /// Set x value
     fn set_x(&mut self, x: u16);
+    /// Set y value
     fn set_y(&mut self, y: u16);
+    /// Is position outside of bounds defined by another position?
     fn is_out_of_bounds(&self, bounds: &Position) -> bool {
         self.y() > bounds.y() || self.x() > bounds.x()
     }
-    fn update(&mut self, bounds: &Position, text: &TextType) {
+    /// Update the position based on text
+    fn update(&mut self, _bounds: &Position, _text: &TextType) {
         // do nothing by default
     }
 }
 
 /// Basic structure to hold position on the screen
-#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub struct Position {
     /// x coordinate
     x: u16,
@@ -40,21 +47,14 @@ impl PositionTrait for Position {
     }
 }
 
-impl Default for Position {
-    fn default() -> Self {
-        Self {
-            x: 0,
-            y: 0,
-        }
-    }
-}
-
 impl Position {
+    /// Create new [Position]
     pub fn new(x: u16, y: u16) -> Self {
         Self { x, y }
     }
 }
 
+/// Position which autocenters itself
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct CenteredPosition {
     #[serde(default)]
@@ -66,6 +66,7 @@ pub struct CenteredPosition {
 }
 
 impl CenteredPosition {
+    /// New [CenteredPosition]
     pub fn new(bounds: &Position, text: &TextType) -> Self {
         let mut new_centered = Self {
             position: Position {x: 0, y: 0},
@@ -117,9 +118,12 @@ impl Default for CenteredPosition {
     }
 }
 
+/// Position type
 #[enum_dispatch(PositionTrait)]
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum PositionType {
+    /// Static [Position]
     Static(Position),
+    /// [CenteredPostion]
     Center(CenteredPosition),
 }
