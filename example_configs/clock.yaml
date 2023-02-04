@@ -1,0 +1,25 @@
+colors:
+  trail: !RGB
+    r: 127
+    g: 222
+    b: 90
+  head: !RGB
+    r: 100
+    g: 150
+    b: 110
+  left_behind: !RGB
+    r: 13
+    g: 89
+    b: 30
+no_fallers: 50
+chars_to_use: abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\/.,:;
+message:
+  position: !Center
+  bounds:
+    x: 135
+    y: 37
+  text: !CurrentDateTime ' %d %B %Y - %H:%M ' # seconds are not updated fast enough to be useful
+  color: !RGB
+    r: 41
+    g: 194
+    b: 148

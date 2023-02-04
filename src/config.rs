@@ -2,15 +2,17 @@
 // only because derive(Getters) give me error about functions derived by it do not have docs
 // most likely there is better way to do this
 
+use crate::position::{CenteredPosition, PositionTrait, PositionType};
 use crate::{
     colors::{Color, Colors},
-    message::Message,
+    message::{Message, TextType},
     Position,
 };
 use clap::Parser;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 use termion::terminal_size;
+
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 macro_rules! gen_skip_if_default {
@@ -59,11 +61,6 @@ gen_skip_if_default!(chars_to_use, String);
 gen_skip_if_default!(message, Option<Message>);
 
 impl Config {
-    /// Create new [Config] instance with default values
-    pub fn new_with_defaults() -> Self {
-        Default::default()
-    }
-
     /// Parse [Config] from [Cli] (via clap).
     ///
     /// Overwrite defaults with parameters from Cli, or do not if parameter is not present.
@@ -73,15 +70,9 @@ impl Config {
         let cli = Cli::parse();
 
         let size = match (cli.size_x, cli.size_y) {
-            (Some(x), Some(y)) => Position { x, y },
-            (Some(x), None) => Position {
-                x,
-                ..self.screen_size
-            },
-            (None, Some(y)) => Position {
-                y,
-                ..self.screen_size
-            },
+            (Some(x), Some(y)) => Position::new(x, y),
+            (Some(x), None) => Position::new(x, self.screen_size.y()),
+            (None, Some(y)) => Position::new(self.screen_size.x(), y),
             _ => self.screen_size,
         };
         self.screen_size = size;
@@ -134,21 +125,24 @@ impl Config {
         self.chars_to_use = chars_to_use;
 
         let message = cli.message.clone().map(|message_text| Message {
-            position: Position::new_for_centered_text(&size, &message_text)
-                .expect("Cannot use entered message text as it is bigger than screen size!"),
-            text: message_text,
+            position: PositionType::Center(CenteredPosition::new(
+                &size,
+                &TextType::StaticString(message_text.clone()),
+            )),
+            text: TextType::StaticString(message_text),
             color: color_trail.clone(),
+            bounds: size,
         });
         // New message is present use it
         if message.is_some() {
-            if message.clone().unwrap().text.is_empty() {
+            if message.clone().unwrap().text.to_string().is_empty() {
                 self.message = None;
             } else {
                 self.message = message;
             }
         // No new message is present, but screen size could have been overwritten by cli params, need to center it again
         } else if self.message.is_some() {
-            self.message = self.message.clone().unwrap().clone_centered_or_none(&size)
+            self.message = self.message.clone();
         }
     }
 }
@@ -156,13 +150,10 @@ impl Config {
 impl Default for Config {
     fn default() -> Self {
         let default_size = terminal_size().expect("Cannot get terminal size!");
-        let screen_size = Position {
-            x: default_size.0,
-            y: default_size.1,
-        };
-        let message_text = format!("   ruMatrix {VERSION}   ");
+        let screen_size = Position::new(default_size.0, default_size.1);
+        let message_text = TextType::StaticString(format!("   ruMatrix {VERSION}   "));
         let message = Message::new_centered_or_none(
-            &screen_size,
+            screen_size,
             message_text,
             Color::RGB {
                 r: 41,
@@ -178,7 +169,7 @@ impl Default for Config {
                 left_behind: Color::RGB { r: 13, g: 89, b: 30 },
             },
             no_fallers: 50,
-            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@#$%^&*()-_+|{}[]<>?!~\\/.,:;".into(),
+            chars_to_use: "abcdefghijklmnopqrstuwvxyzABCDEFGHIJKLMNOPQRSTUWVXYZ0123456789!@$%^&*()_+|{}[]<>?!~\\/.,:;".into(),
             message,
         }
     }
@@ -217,6 +208,11 @@ pub struct Cli {
     /// Message to show on the screen (default: no message)
     #[arg(long = "msg", short = 'm')]
     message: Option<String>,
+
+    /// Show current date and or time on the screen using date formatting string
+    /// This will overwrite --msg
+    #[arg(long = "date", short = 'd')]
+    date_format: Option<String>,
 
     /// Print current configuration as YAML - do not include default values
     #[arg(long = "print-config")]
