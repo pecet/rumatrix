@@ -36,12 +36,12 @@ use termion::raw::IntoRawMode;
 use termion::screen::IntoAlternateScreen;
 use termion::{async_stdin, clear, cursor, screen::ToMainScreen, style};
 
+use crate::position::PositionTrait;
 use std::{
     io::Bytes,
     io::{self, Write},
     process,
 };
-use crate::position::PositionTrait;
 
 // Easiest way to have this parametrized via cli IMHO
 // TODO: Find better way

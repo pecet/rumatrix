@@ -36,7 +36,13 @@ impl<'a> FallerAdder<'a> {
 
         for _ in falling_chars.len()..*self.config.no_fallers() {
             if self.rng.gen_bool(self.probability_to_add) {
-                let position = Position::new(*self.positions.get().expect("Cannot get random position from bag"), 1);
+                let position = Position::new(
+                    *self
+                        .positions
+                        .get()
+                        .expect("Cannot get random position from bag"),
+                    1,
+                );
                 falling_chars.push(FallingChar::new(
                     self.rng,
                     position,

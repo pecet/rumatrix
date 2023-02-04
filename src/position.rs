@@ -1,6 +1,6 @@
+use crate::message::TextType;
 use enum_dispatch::enum_dispatch;
 use serde::{Deserialize, Serialize};
-use crate::message::TextType;
 
 /// Trait definies basic methods for all position types. See also [PositionType]
 #[enum_dispatch]
@@ -69,7 +69,7 @@ impl CenteredPosition {
     /// New [CenteredPosition]
     pub fn new(bounds: &Position, text: &TextType) -> Self {
         let mut new_centered = Self {
-            position: Position {x: 0, y: 0},
+            position: Position { x: 0, y: 0 },
             last_text: TextType::StaticString("".into()),
         };
         new_centered.update(bounds, text);
@@ -99,7 +99,7 @@ impl PositionTrait for CenteredPosition {
         if *text != self.last_text {
             if bounds.x < text.to_string().len() as u16 {
                 // TO DO: change return type to result and return error here
-                return
+                return;
             }
             let x = (bounds.x - text.to_string().len() as u16) / 2;
             let y = bounds.y / 2;
@@ -113,7 +113,7 @@ impl Default for CenteredPosition {
     fn default() -> Self {
         Self {
             position: Default::default(),
-            last_text: TextType::StaticString("".into())
+            last_text: TextType::StaticString("".into()),
         }
     }
 }

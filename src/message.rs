@@ -1,9 +1,9 @@
 use chrono::Local;
 use serde::{Deserialize, Serialize};
 
-use crate::{colors::Color, Position};
 use crate::message::TextType::StaticString;
 use crate::position::{CenteredPosition, PositionTrait, PositionType};
+use crate::{colors::Color, Position};
 
 /// Struct holds message currently displayed on screen with its:
 /// `position` and `text`
@@ -91,5 +91,3 @@ impl ToString for TextType {
         }
     }
 }
-
-

@@ -2,6 +2,7 @@
 // only because derive(Getters) give me error about functions derived by it do not have docs
 // most likely there is better way to do this
 
+use crate::position::{CenteredPosition, PositionTrait, PositionType};
 use crate::{
     colors::{Color, Colors},
     message::{Message, TextType},
@@ -11,7 +12,6 @@ use clap::Parser;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize};
 use termion::terminal_size;
-use crate::position::{CenteredPosition, PositionTrait, PositionType};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -125,7 +125,10 @@ impl Config {
         self.chars_to_use = chars_to_use;
 
         let message = cli.message.clone().map(|message_text| Message {
-            position: PositionType::Center(CenteredPosition::new(&size, &TextType::StaticString(message_text.clone()))),
+            position: PositionType::Center(CenteredPosition::new(
+                &size,
+                &TextType::StaticString(message_text.clone()),
+            )),
             text: TextType::StaticString(message_text),
             color: color_trail.clone(),
             bounds: size,
