@@ -96,10 +96,10 @@ impl PositionTrait for CenteredPosition {
 
     fn update(&mut self, bounds: &Position, text: &TextType) {
         // Update only if necessary
-        if *text != self.last_text {
+        /*if *text != self.last_text*/ {
             if bounds.x < text.to_string().len() as u16 {
                 // TO DO: change return type to result and return error here
-                return;
+                panic!("Message provided is longer than screen");
             }
             let x = (bounds.x - text.to_string().len() as u16) / 2;
             let y = bounds.y / 2;
