@@ -144,6 +144,10 @@ impl Config {
         } else if self.message.is_some() {
             self.message = self.message.clone();
         }
+        if let Some(ref mut message) = self.message {
+            message.bounds = size;
+            message.update_position();
+        }
     }
 }
 
