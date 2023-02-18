@@ -54,12 +54,6 @@ pub struct Config {
     message: Option<Message>,
 }
 
-impl Config {
-    pub fn message_mut(&mut self) -> &mut Option<Message> {
-        &mut self.message
-    }
-}
-
 gen_skip_if_default!(screen_size, Position);
 gen_skip_if_default!(colors, Colors);
 gen_skip_if_default!(no_fallers, usize);
