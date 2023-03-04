@@ -115,3 +115,87 @@ impl Color {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn rgb_ansi_string() {
+        let c = Color::RGB { r: 10, g: 20, b: 30 };
+        let ansi_string = c.get_ansi_string();
+        assert_eq!(ansi_string, "\u{1b}[38;2;10;20;30m");
+    }
+
+    #[test]
+    fn rgb_from_vec() {
+        let c = Color::RGB { r: 2, g: 4, b: 8 };
+        match c {
+            Color::RGB { r, g, b } => {
+                assert_eq!(r, 2);
+                assert_eq!(g, 4);
+                assert_eq!(b, 8);
+            },
+            _ => { panic!("Got non RGB color"); }
+        }
+    }
+
+    #[test]
+    fn rgb_auto_head_color() {
+        let c = Color::RGB { r: 255, g: 250, b: 10 };
+        let head_color = c.get_auto_head_color();
+        match head_color {
+            Color::RGB { r, g, b } => {
+                assert_eq!(r, 255);
+                assert_eq!(g, 255);
+                assert_eq!(b, 25);
+            },
+            _ => { panic!("Got non RGB color"); }
+        }
+    }
+
+    #[test]
+    fn rgb_left_behind_color() {
+        let c = Color::RGB { r: 255, g: 250, b: 10 };
+        let left_behind_color = c.get_auto_left_behind_color();
+        match left_behind_color {
+            Color::RGB { r, g, b } => {
+                assert_eq!(r, 225);
+                assert_eq!(g, 220);
+                assert_eq!(b, 0);
+            },
+            _ => { panic!("Got non RGB color"); }
+        }
+    }
+
+    #[test]
+    fn pallete_ansi_string() {
+        let c = Color::Palette(3);
+        let ansi_string = c.get_ansi_string();
+        assert_eq!(ansi_string, "\u{1b}[38;5;3m")
+    }
+
+    #[test]
+    fn pallete_head_color() {
+        let c = Color::Palette(4);
+        let head_color = c.get_auto_head_color();
+        match head_color {
+            Color::Palette(p) => {
+                assert_eq!(p, 12);
+            },
+            _ => { panic!("Got non Palette color"); }
+        }
+    }
+
+    #[test]
+    fn pallete_auto_left_behind_color() {
+        let c = Color::Palette(4);
+        let left_behind_color = c.get_auto_head_color();
+        match left_behind_color {
+            Color::Palette(p) => {
+                assert_eq!(p, 12);
+            },
+            _ => { panic!("Got non Palette color"); }
+        }
+    }
+}
