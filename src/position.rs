@@ -63,14 +63,18 @@ pub struct CenteredPosition {
     #[serde(default)]
     #[serde(skip_serializing)]
     last_text: TextType,
+    #[serde(default)]
+    #[serde(skip_serializing)]
+    last_bounds: Position,    
 }
 
 impl CenteredPosition {
     /// New [CenteredPosition]
     pub fn new(bounds: &Position, text: &TextType) -> Self {
         let mut new_centered = Self {
-            position: Position { x: 0, y: 0 },
+            position: Position::default(),
             last_text: TextType::StaticString("".into()),
+            last_bounds: Position::default(),
         };
         new_centered.update(bounds, text);
         new_centered
@@ -96,7 +100,7 @@ impl PositionTrait for CenteredPosition {
 
     fn update(&mut self, bounds: &Position, text: &TextType) {
         // Update only if necessary
-        if *text != self.last_text {
+        if *text != self.last_text || self.last_bounds != *bounds {
             if bounds.x < text.to_string().len() as u16 {
                 // TO DO: change return type to result and return error here
                 panic!("Message provided is longer than screen");
@@ -105,6 +109,8 @@ impl PositionTrait for CenteredPosition {
             let y = bounds.y / 2;
             self.position.x = x;
             self.position.y = y;
+            self.last_text = text.clone();
+            self.last_bounds = *bounds;
         }
     }
 }
@@ -114,6 +120,7 @@ impl Default for CenteredPosition {
         Self {
             position: Default::default(),
             last_text: TextType::StaticString("".into()),
+            last_bounds: Position::default(),
         }
     }
 }
@@ -126,4 +133,56 @@ pub enum PositionType {
     Static(Position),
     /// [CenteredPostion]
     Center(CenteredPosition),
+}
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn position_new_and_getters() {
+        let position = Position::new(12, 24);
+        assert_eq!(position.x(), 12);
+        assert_eq!(position.y(), 24);
+    }
+
+    #[test]
+    fn position_setters_and_getters() {
+        let mut position = Position::new(0, 0);
+        position.set_x(3);
+        position.set_y(15);
+        assert_eq!(position.x(), 3);
+        assert_eq!(position.y(), 15);        
+    }
+
+    #[test]
+    fn position_is_out_of_bounds() {
+        let bounds = Position::new(30, 30);
+        let position = Position::new(15, 15);
+        assert_eq!(position.is_out_of_bounds(&bounds), false);
+        let position = Position::new(333, 2);
+        assert_eq!(position.is_out_of_bounds(&bounds), true);
+        let position = Position::new(2, 333);
+        assert_eq!(position.is_out_of_bounds(&bounds), true);
+    }
+
+    #[test]
+    fn centered_position_with_static_text() {
+        let bounds = Position::new(30, 30);
+        let text = TextType::StaticString("X".to_owned());
+        let position = CenteredPosition::new(&bounds, &text);
+        assert_eq!(position.x(), 14);
+        assert_eq!(position.y(), 15);
+    }
+
+    #[test]
+    fn centered_position_with_static_text_updating() {
+        let bounds = Position::new(30, 30);
+        let text = TextType::StaticString("X".to_owned());
+        let mut position = CenteredPosition::new(&bounds, &text);
+        let bounds = Position::new(31, 22);
+        let text = TextType::StaticString("Lorem Ipsum".to_owned());
+        position.update(&bounds, &text);
+        assert_eq!(position.x(), 10);
+        assert_eq!(position.y(), 11);
+    }
 }
