@@ -91,3 +91,74 @@ impl ToString for TextType {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::message::*;
+    use crate::position::*;
+
+    fn get_test_msg() -> Message {
+        let bounds = Position::new(20, 6);
+        let msg = Message::new_centered_or_none(
+            bounds,
+            TextType::StaticString("Lorem".to_owned()), 
+            Color::Palette(1)
+        );
+        msg.unwrap()
+    }
+
+    #[test]
+    fn new_centered_or_none() {
+        let bounds = Position::new(20, 5);
+        let msg = Message::new_centered_or_none(
+            bounds,
+            TextType::StaticString("Lorem".to_owned()), 
+            Color::Palette(1)
+        );
+        assert!(msg.is_some());
+    }
+
+    #[test]
+    fn is_position_inside_message() {
+        let msg = get_test_msg();
+
+        let position = Position::new(10, 3);
+        assert_eq!(msg.is_position_inside_message(&position), true);
+
+        let position = Position::new(10, 1);
+        assert_eq!(msg.is_position_inside_message(&position), false);
+
+        let position = Position::new(2, 3);
+        assert_eq!(msg.is_position_inside_message(&position), false);
+
+        let position = Position::new(7, 3);
+        assert_eq!(msg.is_position_inside_message(&position), true);
+    }
+
+    #[test]
+    fn get_char_in_position() {
+        let msg = get_test_msg();
+        
+        let position = Position::new(2, 2);
+        let ch = msg.get_char_in_position(&position);
+        assert!(ch.is_none());
+
+        let position = Position::new(6, 3);
+        let ch = msg.get_char_in_position(&position);
+        assert!(ch.is_none());
+
+        let position = Position::new(7, 3);
+        let ch = msg.get_char_in_position(&position);
+        assert!(ch.is_some());
+        assert_eq!(ch.unwrap(), 'L');
+
+        let position = Position::new(11, 3);
+        let ch = msg.get_char_in_position(&position);
+        assert!(ch.is_some());
+        assert_eq!(ch.unwrap(), 'm');
+
+        let position = Position::new(12, 3);
+        let ch = msg.get_char_in_position(&position);
+        assert!(ch.is_none());
+    }
+}
