@@ -2,7 +2,7 @@ use crate::{colors::Colors, message::Message, position::*};
 use rand::prelude::*;
 use std::{
     cmp::max,
-    io::{Stdout, Write}, cell::{RefCell, RefMut}, rc::Rc,
+    io::{Stdout, Write}, cell::RefCell, rc::Rc,
 };
 use termion::raw::RawTerminal;
 use termion::{cursor, screen::AlternateScreen, style};
