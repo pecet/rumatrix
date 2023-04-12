@@ -49,12 +49,16 @@ impl<'a> FallingChar<'a> {
 
     /// Get randomly ordered chars to be used in rendering process
     fn get_random_chars(rng: Rc<RefCell<dyn RngCore>>, size: u16, chars_to_use: &str) -> Vec<char> {
-        let rng = Rc::clone(&rng).borrow_mut();
-        let mut random_chars = chars_to_use.chars().choose_multiple(rng, size as usize);
-        // choose_multiple will only chose max of chars_to_use.chars().len() items, but we might want more
+        // these two lines do not work when put in one line for some reason
+        let rng = Rc::clone(&rng);
+        let mut rng = rng.borrow_mut();
+        let chars_to_select: Vec<_> = chars_to_use.chars().collect();
+
+        let mut random_chars: Vec<char> = Vec::with_capacity(size as usize);
         while random_chars.len() < size as usize {
-            let amount_left = (size as usize) - random_chars.len();
-            random_chars.extend(chars_to_use.chars().choose_multiple(rng, amount_left));
+            let index = rng.gen_range(0..chars_to_select.len());
+            let selected_char = chars_to_select[index];
+            random_chars.push(selected_char);
         }
         random_chars
     }
