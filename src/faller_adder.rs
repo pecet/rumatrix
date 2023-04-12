@@ -12,7 +12,7 @@ pub struct ProbabilityOutOfBoundsError;
 /// Structure holds abstract being which can add new [FallingChar]s or delete existing
 pub struct FallerAdder<'a> {
     /// [ThreadRng] to use
-    pub rng: &'a mut ThreadRng,
+    pub rng: Rc<RefCell<dyn RngCore>>,
     /// [Vec<FallingChar>] holding all instances of [FallingChar]
     pub falling_chars: Rc<RefCell<Vec<FallingChar<'a>>>>,
     /// Probability to add new falling char on the screen. Value should satisfy `0.0 <= probability <= 1.0` otherwise [ProbabilityOutOfBoundsError] will be generated.
@@ -35,7 +35,7 @@ impl<'a> FallerAdder<'a> {
         falling_chars.retain(|f| f.should_be_retained());
 
         for _ in falling_chars.len()..*self.config.no_fallers() {
-            if self.rng.gen_bool(self.probability_to_add) {
+            if self.rng.borrow_mut().gen_bool(self.probability_to_add) {
                 let position = Position::new(
                     *self
                         .positions
@@ -44,7 +44,7 @@ impl<'a> FallerAdder<'a> {
                     1,
                 );
                 falling_chars.push(FallingChar::new(
-                    self.rng,
+                    Rc::clone(&self.rng),
                     position,
                     *self.config.screen_size(),
                     self.config.colors(),
