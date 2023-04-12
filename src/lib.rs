@@ -104,7 +104,6 @@ pub fn main_loop(falling_chars: Rc<RefCell<Vec<FallingChar>>>) {
 
 /// Main function of the program
 pub fn program_main() {
-    let mut rng = thread_rng();
     let cli = Cli::parse();
 
     let mut config = match cli.config_file {
@@ -160,7 +159,7 @@ pub fn program_main() {
     let mut stdin = async_stdin().bytes();
     let falling_char_ref1 = Rc::clone(&falling_chars);
     let mut faller_adder = FallerAdder {
-        rng: &mut rng,
+        rng: Rc::new(RefCell::new(thread_rng())),
         falling_chars: falling_char_ref1,
         probability_to_add: 0.22,
         positions: &mut position_bag,
