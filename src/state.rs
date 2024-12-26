@@ -37,7 +37,7 @@ impl Default for Faller {
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub struct Position<N: Num> {
     pub x: N,
     pub y: N,
