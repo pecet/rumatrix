@@ -12,6 +12,7 @@ pub enum TerminalCell {
     },
 }
 
+#[derive(Debug)]
 pub struct TerminalCells {
     cell: Vec<TerminalCell>,
     max: Position<u16>,
@@ -29,6 +30,10 @@ impl TerminalCells {
             cell,
             max: Position::new(max_x, max_y)
         }
+    }
+
+    pub fn empty_sized_as(other: &TerminalCells) -> Self {
+        Self::new(other.max.x, other.max.y)
     }
 
     pub fn from_iter<I>(max_x: u16, max_y: u16, iter: I) -> Self

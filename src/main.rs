@@ -23,7 +23,7 @@ fn main() {
     loop {
         let start = Instant::now();
         renderer.render();
-        //thread::sleep(Duration::from_millis(5));
+        thread::sleep(Duration::from_millis(5));
         let took = Instant::now().duration_since(previous_start);
         state.advance(took.as_secs_f64());
         previous_start = start;

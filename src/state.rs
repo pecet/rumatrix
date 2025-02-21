@@ -1,11 +1,11 @@
-use std::cell::{Ref, RefCell};
-use std::rc::Rc;
+use crate::config::Config;
 use crossterm::cursor::position;
 use num_traits::{Num, NumCast, NumOps, ToPrimitive};
 use rand::rng;
 use rand::seq::IndexedRandom;
 use serde_yml::modules::error::Pos;
-use crate::config::Config;
+use std::cell::{Ref, RefCell};
+use std::rc::Rc;
 
 type DeltaType = f64;
 pub struct Faller {
@@ -15,10 +15,7 @@ pub struct Faller {
 
 impl Faller {
     pub fn new(position: Position<DeltaType>, symbol: char) -> Self {
-        Self {
-            position,
-            symbol
-        }
+        Self { position, symbol }
     }
 
     pub fn get_position(&self) -> &Position<DeltaType> {
@@ -49,10 +46,12 @@ impl<N: Num + Copy + ToPrimitive> Position<N> {
     }
 
     pub fn as_tuple<T>(&self) -> (T, T)
-    where T: NumCast + Default + Copy {
+    where
+        T: NumCast + Default + Copy,
+    {
         (
             T::from(self.x).unwrap_or(T::default()),
-            T::from(self.y).unwrap_or(T::default())
+            T::from(self.y).unwrap_or(T::default()),
         )
     }
 
@@ -73,12 +72,10 @@ impl State {
         let config = Rc::clone(config);
         let mut fallers = Vec::new();
         for i in 0..10 {
-            fallers.push(
-                Faller::new(
-                    Position::new(i as DeltaType * 3.0, 0.0),
-                    config.symbols.choose(&mut rng()).unwrap().clone(),
-                )
-            )
+            fallers.push(Faller::new(
+                Position::new(i as DeltaType * 3.0, 0.0),
+                config.symbols.choose(&mut rng()).unwrap().clone(),
+            ))
         }
         Self {
             config,
