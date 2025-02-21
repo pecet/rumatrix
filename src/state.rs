@@ -1,7 +1,7 @@
 use crate::config::Config;
 use crossterm::cursor::position;
 use num_traits::{Num, NumCast, NumOps, ToPrimitive};
-use rand::rng;
+use rand::{random_range, rng};
 use rand::seq::IndexedRandom;
 use serde_yml::modules::error::Pos;
 use std::cell::{Ref, RefCell};
@@ -11,11 +11,12 @@ type DeltaType = f64;
 pub struct Faller {
     position: Position<DeltaType>,
     symbol: char,
+    speed: DeltaType,
 }
 
 impl Faller {
-    pub fn new(position: Position<DeltaType>, symbol: char) -> Self {
-        Self { position, symbol }
+    pub fn new(position: Position<DeltaType>, symbol: char, speed: DeltaType) -> Self {
+        Self { position, symbol, speed }
     }
 
     pub fn get_position(&self) -> &Position<DeltaType> {
@@ -30,7 +31,7 @@ impl Faller {
 impl Default for Faller {
     fn default() -> Self {
         let x = Position::new(0.0, 0.0);
-        Self::new(Position::new(0.0, 0.0), 'X')
+        Self::new(Position::new(0.0, 0.0), 'X', 2.5)
     }
 }
 
@@ -75,6 +76,7 @@ impl State {
             fallers.push(Faller::new(
                 Position::new(i as DeltaType * 3.0, 0.0),
                 config.symbols.choose(&mut rng()).unwrap().clone(),
+                random_range(1.5..4.0),
             ))
         }
         Self {
@@ -88,7 +90,7 @@ impl State {
     pub fn advance(&self, delta_time: DeltaType) {
         let config = Rc::clone(&self.config);
         for faller in self.fallers.borrow_mut().iter_mut() {
-            faller.position.y += 2.5 * delta_time;
+            faller.position.y += faller.speed * delta_time;
             if faller.position.y > config.size_y.unwrap().into() {
                 faller.position.y = 0.0;
             }
